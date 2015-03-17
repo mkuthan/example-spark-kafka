@@ -24,3 +24,12 @@ Create output topic:
 bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 10 --topic output
 ```
 
+Start kafka consumer:
+
+```
+bin/kafka-console-consumer.sh bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic output
+```
+
+Spark UI
+
+[http://localhost:4040/](http://localhost:4040/)

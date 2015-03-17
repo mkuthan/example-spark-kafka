@@ -50,6 +50,8 @@ object ApplicationBuild extends Build {
     "org.apache.spark" %% "spark-streaming" % Versions.spark,
     "org.apache.spark" %% "spark-streaming-kafka" % Versions.spark,
 
+    "com.typesafe" % "config" % "1.2.1",
+
     "org.slf4j" % "slf4j-api" % "1.7.10",
     "ch.qos.logback" % "logback-classic" % "1.1.2"
   ).map(_.exclude(
