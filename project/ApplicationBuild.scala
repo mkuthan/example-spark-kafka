@@ -30,10 +30,16 @@ object ApplicationBuild extends Build {
     "-deprecation",
     "-encoding", "UTF-8",
     "-feature",
-    "-language:existentials",
-    "-language:higherKinds",
-    "-language:implicitConversions",
-    "-unchecked")
+    "-unchecked",
+    "-Xfatal-warnings",
+    "-Xfuture",
+    "-Xlint",
+    "-Yno-adapted-args",
+    "-Ywarn-dead-code", // slow
+    "-Ywarn-numeric-widen",
+    // "-Ywarn-unused-import", until scala 2.11 // slow
+    "-Ywarn-value-discard"
+  )
 
   val customResolvers = Seq(
     Classpaths.sbtPluginReleases,

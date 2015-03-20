@@ -1,3 +1,19 @@
+// Copyright (C) 2011-2012 the original author or authors.
+// See the LICENCE.txt file distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package example
 
 import java.nio.file.Files
@@ -13,14 +29,16 @@ import scala.collection.JavaConversions._
 
 object KafkaExample {
 
-  def main(args: Array[String]) = {
+  val BatchDuration = 10L
+
+  def main(args: Array[String]): Unit = {
     val conf = ConfigFactory.load()
 
     val brokers = conf.getString("example.brokers")
     val inputTopic = conf.getString("example.topics.input")
     val outputTopic = conf.getString("example.topics.output")
 
-    val batchDuration = Seconds(10)
+    val batchDuration = Seconds(BatchDuration)
     val checkpointDir = Files.createTempDirectory(getClass.getSimpleName).toString
 
     val producerConfig = Map(
@@ -42,13 +60,11 @@ object KafkaExample {
     val kafkaParams = Map("metadata.broker.list" -> brokers)
     val kafkaTopics = Set(inputTopic)
 
-    val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc, kafkaParams, kafkaTopics)
+    val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
+      ssc, kafkaParams, kafkaTopics)
 
     messages.foreachRDD { (rdd, time) =>
-      //println(s"RDD time: $time")
-
       val offsets = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
-      //offsets.foreach(println)
 
       rdd.foreachPartition { partition =>
         withKafkaProducer { kafkaProducer =>
