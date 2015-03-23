@@ -16,76 +16,41 @@
 
 package example
 
-import java.nio.file.Files
-
-import com.typesafe.config.ConfigFactory
-import kafka.serializer.StringDecoder
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
-import org.apache.spark._
-import org.apache.spark.streaming._
+import example.kafka.KafkaSink
+import example.spark.SparkApplication
 import org.apache.spark.streaming.kafka._
-
-import scala.collection.JavaConversions._
 
 object KafkaExample {
 
-  val BatchDuration = 10L
-
   def main(args: Array[String]): Unit = {
-    val conf = ConfigFactory.load()
+    val applicationConfig = ApplicationConfig()
+    val sparkApplication = SparkApplication(applicationConfig.spark, applicationConfig.inputTopic)
 
-    val brokers = conf.getString("example.brokers")
-    val inputTopic = conf.getString("example.topics.input")
-    val outputTopic = conf.getString("example.topics.output")
+    val applicationConfigVar = sparkApplication.broadcast(applicationConfig)
 
-    val batchDuration = Seconds(BatchDuration)
-    val checkpointDir = Files.createTempDirectory(getClass.getSimpleName).toString
-
-    val producerConfig = Map(
-      "bootstrap.servers" -> brokers,
-      "key.serializer" -> "org.apache.kafka.common.serialization.StringSerializer",
-      "value.serializer" -> "org.apache.kafka.common.serialization.StringSerializer"
-    )
-
-    val sparkConfig = new SparkConf()
-      .setMaster("local[4]")
-      .setAppName("example-kafka")
-
-    val ssc = new StreamingContext(sparkConfig, batchDuration)
-    ssc.checkpoint(checkpointDir)
-
-    val producerConfigVar = ssc.sparkContext.broadcast(producerConfig)
-    val outputTopicVar = ssc.sparkContext.broadcast(outputTopic)
-
-    val kafkaParams = Map("metadata.broker.list" -> brokers)
-    val kafkaTopics = Set(inputTopic)
-
-    val messages = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](
-      ssc, kafkaParams, kafkaTopics)
+    val messages = sparkApplication.createDirectStream
 
     messages.foreachRDD { (rdd, time) =>
       val offsets = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
 
       rdd.foreachPartition { partition =>
-        withKafkaProducer { kafkaProducer =>
+        withKafkaProducer { sink =>
           partition.foreach { case (key, value) =>
-            kafkaProducer.send(
-              new ProducerRecord(outputTopicVar.value, key, value)
-            )
+            sink.write(applicationConfigVar.value.outputTopic, key, value)
           }
         }
       }
     }
 
-    ssc.start()
-    ssc.awaitTermination()
+    sparkApplication.start()
+    sparkApplication.awaitTermination()
 
-    def withKafkaProducer[A](f: KafkaProducer[String, String] => A): A = {
-      val producer = new KafkaProducer[String, String](producerConfigVar.value)
+    def withKafkaProducer[A](f: Sink => A): A = {
+      val kafkaSink = KafkaSink(applicationConfigVar.value.kafkaProducer)
       try {
-        f(producer)
+        f(kafkaSink)
       } finally {
-        producer.close()
+        kafkaSink.close()
       }
     }
   }

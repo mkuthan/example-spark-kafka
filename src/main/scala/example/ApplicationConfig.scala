@@ -16,30 +16,28 @@
 
 package example
 
-import java.nio.ByteBuffer
+import com.typesafe.config._
+import example.kafka.KafkaProducerConfig
+import example.spark.SparkConfig
 
-import example.kafka.KafkaSink
+class ApplicationConfig(config: Config) extends Serializable {
 
-object ExampleKafkaProducer {
+  private val applicationConfig = config.getConfig("example")
 
-  val NumberOfEvents = 1000
-  val LongBufferSize = 8
+  def inputTopic: String = applicationConfig.getString("input.topic")
 
-  def main(args: Array[String]): Unit = {
-    val applicationConfig = ApplicationConfig()
-    val sink = KafkaSink(applicationConfig.kafkaProducer)
+  def outputTopic: String = applicationConfig.getString("output.topic")
 
-    val valueBuffer = ByteBuffer.allocate(LongBufferSize)
-    (1 to NumberOfEvents).foreach { i =>
-      sink.write(
-        applicationConfig.inputTopic,
-        s"key: $i".getBytes,
-        valueBuffer.putLong(0, System.currentTimeMillis()).array()
-      )
-    }
+  def spark: SparkConfig = SparkConfig(applicationConfig.getConfig("spark"))
 
-    sink.close()
-  }
+  def kafkaProducer: KafkaProducerConfig = KafkaProducerConfig(applicationConfig.getConfig("kafka.producer"))
 
+}
+
+object ApplicationConfig {
+
+  def apply(): ApplicationConfig = apply(ConfigFactory.load())
+
+  def apply(config: Config): ApplicationConfig = new ApplicationConfig(config)
 
 }

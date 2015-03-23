@@ -16,30 +16,10 @@
 
 package example
 
-import java.nio.ByteBuffer
+trait Sink {
 
-import example.kafka.KafkaSink
+  def write(topic: String, key: Array[Byte], value: Array[Byte]): Unit
 
-object ExampleKafkaProducer {
-
-  val NumberOfEvents = 1000
-  val LongBufferSize = 8
-
-  def main(args: Array[String]): Unit = {
-    val applicationConfig = ApplicationConfig()
-    val sink = KafkaSink(applicationConfig.kafkaProducer)
-
-    val valueBuffer = ByteBuffer.allocate(LongBufferSize)
-    (1 to NumberOfEvents).foreach { i =>
-      sink.write(
-        applicationConfig.inputTopic,
-        s"key: $i".getBytes,
-        valueBuffer.putLong(0, System.currentTimeMillis()).array()
-      )
-    }
-
-    sink.close()
-  }
-
+  def close(): Unit
 
 }

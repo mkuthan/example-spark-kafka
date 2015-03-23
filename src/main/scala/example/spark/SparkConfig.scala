@@ -14,32 +14,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example
+package example.spark
 
-import java.nio.ByteBuffer
+import java.util.concurrent.TimeUnit
 
-import example.kafka.KafkaSink
+import com.typesafe.config.Config
 
-object ExampleKafkaProducer {
+class SparkConfig(config: Config) extends Serializable {
 
-  val NumberOfEvents = 1000
-  val LongBufferSize = 8
+  def master: String = config.getString("master")
 
-  def main(args: Array[String]): Unit = {
-    val applicationConfig = ApplicationConfig()
-    val sink = KafkaSink(applicationConfig.kafkaProducer)
+  def appName: String = config.getString("appName")
 
-    val valueBuffer = ByteBuffer.allocate(LongBufferSize)
-    (1 to NumberOfEvents).foreach { i =>
-      sink.write(
-        applicationConfig.inputTopic,
-        s"key: $i".getBytes,
-        valueBuffer.putLong(0, System.currentTimeMillis()).array()
-      )
-    }
+  def batchDuration: Long = config.getDuration("batchDuration", TimeUnit.SECONDS)
 
-    sink.close()
-  }
+  def kafkaMetadataBrokerList: String = config.getString("kafka.metadata.broker.list")
 
+  def kafkaAutoOffsetReset: String = config.getString("kafka.auto.offset.reset")
 
+}
+
+object SparkConfig {
+  def apply(config: Config): SparkConfig = new SparkConfig(config)
 }

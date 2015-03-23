@@ -14,32 +14,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example
+package example.kafka
 
-import java.nio.ByteBuffer
+import com.typesafe.config.Config
 
-import example.kafka.KafkaSink
+class KafkaProducerConfig(config: Config) extends Serializable {
 
-object ExampleKafkaProducer {
+  def bootstrapServers: String = config.getString("bootstrap.servers")
 
-  val NumberOfEvents = 1000
-  val LongBufferSize = 8
+  def acks: String = config.getString("acks")
 
-  def main(args: Array[String]): Unit = {
-    val applicationConfig = ApplicationConfig()
-    val sink = KafkaSink(applicationConfig.kafkaProducer)
+}
 
-    val valueBuffer = ByteBuffer.allocate(LongBufferSize)
-    (1 to NumberOfEvents).foreach { i =>
-      sink.write(
-        applicationConfig.inputTopic,
-        s"key: $i".getBytes,
-        valueBuffer.putLong(0, System.currentTimeMillis()).array()
-      )
-    }
-
-    sink.close()
-  }
-
-
+object KafkaProducerConfig {
+  def apply(config: Config): KafkaProducerConfig = new KafkaProducerConfig(config)
 }
