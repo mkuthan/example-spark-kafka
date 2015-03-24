@@ -16,16 +16,23 @@
 
 package example.spark
 
-import com.typesafe.config.Config
+import org.apache.spark.SparkContext
+import org.apache.spark.streaming.{Seconds, StreamingContext}
 
-class SparkConfig(config: Config) {
+trait SparkStreamingApplication extends SparkApplication {
 
-  val master: String = config.getString("master")
+  def sparkStreamingConfig: SparkStreamingConfig
 
-  val appName: String = config.getString("appName")
+  def withSparkStreamingContext(f: (SparkContext, StreamingContext) => Unit): Unit = {
+    withSparkContext { sparkContext =>
+      val sparkStreamingContext = new StreamingContext(sparkContext, Seconds(sparkStreamingConfig.batchDuration))
+      sparkStreamingContext.checkpoint(sparkStreamingConfig.checkpoint)
 
-}
+      f(sparkContext, sparkStreamingContext)
 
-object SparkConfig {
-  def apply(config: Config): SparkConfig = new SparkConfig(config)
+      sparkStreamingContext.start()
+      sparkStreamingContext.awaitTermination()
+    }
+  }
+
 }

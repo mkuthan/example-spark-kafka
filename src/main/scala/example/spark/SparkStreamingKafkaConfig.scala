@@ -18,14 +18,14 @@ package example.spark
 
 import com.typesafe.config.Config
 
-class SparkConfig(config: Config) {
+class SparkStreamingKafkaConfig(config: Config) {
 
-  val master: String = config.getString("master")
+  val metadataBrokerList: String = config.getString("metadata.broker.list")
 
-  val appName: String = config.getString("appName")
+  val autoOffsetReset: String = config.getString("auto.offset.reset")
 
 }
 
-object SparkConfig {
-  def apply(config: Config): SparkConfig = new SparkConfig(config)
+object SparkStreamingKafkaConfig {
+  def apply(config: Config): SparkStreamingKafkaConfig = new SparkStreamingKafkaConfig(config)
 }

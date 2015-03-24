@@ -18,7 +18,7 @@ package example
 
 import java.nio.ByteBuffer
 
-import example.kafka.KafkaSink
+import example.sinks.kafka.KafkaSink
 
 object ExampleKafkaProducer {
 
@@ -27,7 +27,7 @@ object ExampleKafkaProducer {
 
   def main(args: Array[String]): Unit = {
     val applicationConfig = ApplicationConfig()
-    val sink = KafkaSink(applicationConfig.kafkaProducer)
+    val sink = KafkaSink(applicationConfig.sinkKafka)
 
     val valueBuffer = ByteBuffer.allocate(LongBufferSize)
     (1 to NumberOfEvents).foreach { i =>

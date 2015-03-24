@@ -14,18 +14,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.kafka
+package example.sinks.kafka
 
 import com.typesafe.config.Config
 
-class KafkaProducerConfig(config: Config) extends Serializable {
+class KafkaSinkConfig(config: Config) extends Serializable {
 
-  def bootstrapServers: String = config.getString("bootstrap.servers")
+  val bootstrapServers: String = config.getString("bootstrap.servers")
 
-  def acks: String = config.getString("acks")
+  val acks: String = config.getString("acks")
 
 }
 
-object KafkaProducerConfig {
-  def apply(config: Config): KafkaProducerConfig = new KafkaProducerConfig(config)
+object KafkaSinkConfig {
+  def apply(config: Config): KafkaSinkConfig = new KafkaSinkConfig(config)
 }

@@ -16,44 +16,48 @@
 
 package example
 
-import example.kafka.KafkaSink
-import example.spark.SparkApplication
-import org.apache.spark.streaming.kafka._
+import example.sinks.Sink
+import example.sinks.kafka.KafkaSink
+import example.spark._
+
+class KafkaExample(config: ApplicationConfig) extends SparkStreamingApplication with SparkStreamingKafkaSupport {
+
+  override def sparkConfig: SparkConfig = config.spark
+
+  override def sparkStreamingConfig: SparkStreamingConfig = config.sparkStreaming
+
+  override def sparkStreamingKafkaConfig: SparkStreamingKafkaConfig = config.sparkStreamingKafka
+
+  def start(): Unit = {
+    withSparkStreamingContext {
+      (sparkContext, sparkStreamingContext) =>
+
+        val applicationConfigVar = sparkContext.broadcast(config)
+
+        val messages = createDirectStream(sparkStreamingContext, config.inputTopic)
+
+        messages.foreachRDD { (rdd, time) =>
+          // val offsets = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
+
+          rdd.foreachPartition { partition =>
+            Sink.using(KafkaSink(applicationConfigVar.value.sinkKafka)) { sink =>
+              partition.foreach { case (key, value) =>
+                //    sink.write(applicationConfigVar.value.outputTopic, key, value)
+              }
+            }
+          }
+        }
+    }
+  }
+}
 
 object KafkaExample {
 
   def main(args: Array[String]): Unit = {
-    val applicationConfig = ApplicationConfig()
-    val sparkApplication = SparkApplication(applicationConfig.spark, applicationConfig.inputTopic)
+    val config = ApplicationConfig()
 
-    val applicationConfigVar = sparkApplication.broadcast(applicationConfig)
-
-    val messages = sparkApplication.createDirectStream
-
-    messages.foreachRDD { (rdd, time) =>
-      val offsets = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
-
-      rdd.foreachPartition { partition =>
-        withKafkaProducer { sink =>
-          partition.foreach { case (key, value) =>
-            sink.write(applicationConfigVar.value.outputTopic, key, value)
-          }
-        }
-      }
-    }
-
-    sparkApplication.start()
-    sparkApplication.awaitTermination()
-
-    def withKafkaProducer[A](f: Sink => A): A = {
-      val kafkaSink = KafkaSink(applicationConfigVar.value.kafkaProducer)
-      try {
-        f(kafkaSink)
-      } finally {
-        kafkaSink.close()
-      }
-    }
+    val kafkaExample = new KafkaExample(config)
+    kafkaExample.start()
   }
-
 
 }

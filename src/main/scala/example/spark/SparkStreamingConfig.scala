@@ -16,16 +16,18 @@
 
 package example.spark
 
+import java.util.concurrent.TimeUnit
+
 import com.typesafe.config.Config
 
-class SparkConfig(config: Config) {
+class SparkStreamingConfig(config: Config) {
 
-  val master: String = config.getString("master")
+  val batchDuration: Long = config.getDuration("batchDuration", TimeUnit.SECONDS)
 
-  val appName: String = config.getString("appName")
+  val checkpoint: String = config.getString("checkpoint")
 
 }
 
-object SparkConfig {
-  def apply(config: Config): SparkConfig = new SparkConfig(config)
+object SparkStreamingConfig {
+  def apply(config: Config): SparkStreamingConfig = new SparkStreamingConfig(config)
 }

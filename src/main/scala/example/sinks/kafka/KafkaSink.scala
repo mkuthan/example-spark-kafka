@@ -14,9 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.kafka
+package example.sinks.kafka
 
-import example.Sink
+import example.sinks.Sink
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
 import scala.collection.JavaConversions._
@@ -39,7 +39,7 @@ object KafkaSink {
   private val keySerializer = "org.apache.kafka.common.serialization.ByteArraySerializer"
   private val valueSerializer = "org.apache.kafka.common.serialization.ByteArraySerializer"
 
-  def apply(config: KafkaProducerConfig): KafkaSink = {
+  def apply(config: KafkaSinkConfig): KafkaSink = {
     val producer = new KafkaProducer[Array[Byte], Array[Byte]](
       Map(
         "bootstrap.servers" -> config.bootstrapServers,
@@ -52,3 +52,4 @@ object KafkaSink {
   }
 
 }
+

@@ -14,12 +14,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example
+package example.sinks
 
 trait Sink {
 
   def write(topic: String, key: Array[Byte], value: Array[Byte]): Unit
 
   def close(): Unit
+
+}
+
+object Sink {
+
+  def using[A](r: Sink)(f: Sink => A): A = {
+    try {
+      f(r)
+    } finally {
+      r.close()
+    }
+  }
 
 }

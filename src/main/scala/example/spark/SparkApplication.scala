@@ -16,57 +16,20 @@
 
 package example.spark
 
-import java.nio.file.Files
+import org.apache.spark.{SparkConf, SparkContext}
 
-import kafka.serializer.DefaultDecoder
-import org.apache.spark.SparkConf
-import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.streaming._
-import org.apache.spark.streaming.dstream.DStream
-import org.apache.spark.streaming.kafka._
+trait SparkApplication {
 
-import scala.reflect.ClassTag
+  def sparkConfig: SparkConfig
 
+  def withSparkContext(f: SparkContext => Unit): Unit = {
+    val sparkConf = new SparkConf()
+      .setMaster(sparkConfig.master)
+      .setAppName(sparkConfig.appName)
 
-class SparkApplication(
-                        streamingContext: StreamingContext,
-                        kafkaParams: Map[String, String],
-                        kafkaTopics: Set[String]) {
+    val sparkContext = new SparkContext(sparkConf)
 
-  def createDirectStream: DStream[(Array[Byte], Array[Byte])] = KafkaUtils
-    .createDirectStream[Array[Byte], Array[Byte], DefaultDecoder, DefaultDecoder](
-      streamingContext,
-      kafkaParams,
-      kafkaTopics)
-
-  def broadcast[T: ClassTag](value: T): Broadcast[T] = streamingContext.sparkContext.broadcast(value)
-
-  def start(): Unit = streamingContext.start()
-
-  def awaitTermination(): Unit = streamingContext.awaitTermination()
-
-}
-
-object SparkApplication {
-
-  def apply(config: SparkConfig, inputTopic: String): SparkApplication = {
-    val batchDuration = Seconds(config.batchDuration)
-    val checkpointDir = Files.createTempDirectory(config.appName).toString
-
-    val sparkConfig = new SparkConf()
-      .setMaster(config.master)
-      .setAppName(config.appName)
-
-    val streamingContext = new StreamingContext(sparkConfig, batchDuration)
-    streamingContext.checkpoint(checkpointDir)
-
-    val kafkaParams = Map(
-      "metadata.broker.list" -> config.kafkaMetadataBrokerList,
-      "auto.offset.reset" -> config.kafkaAutoOffsetReset
-    )
-    val kafkaTopics = Set(inputTopic)
-
-    new SparkApplication(streamingContext, kafkaParams, kafkaTopics)
+    f(sparkContext)
   }
 
 }

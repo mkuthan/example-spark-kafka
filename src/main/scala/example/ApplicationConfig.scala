@@ -17,20 +17,28 @@
 package example
 
 import com.typesafe.config._
-import example.kafka.KafkaProducerConfig
-import example.spark.SparkConfig
+import example.sinks.kafka.KafkaSinkConfig
+import example.spark.{SparkStreamingKafkaConfig, SparkConfig, SparkStreamingConfig}
 
 class ApplicationConfig(config: Config) extends Serializable {
 
   private val applicationConfig = config.getConfig("example")
 
-  def inputTopic: String = applicationConfig.getString("input.topic")
+  val inputTopic: String = applicationConfig.getString("input.topic")
 
-  def outputTopic: String = applicationConfig.getString("output.topic")
+  val outputTopic: String = applicationConfig.getString("output.topic")
 
-  def spark: SparkConfig = SparkConfig(applicationConfig.getConfig("spark"))
+  val spark: SparkConfig =
+    SparkConfig(applicationConfig.getConfig("spark"))
 
-  def kafkaProducer: KafkaProducerConfig = KafkaProducerConfig(applicationConfig.getConfig("kafka.producer"))
+  val sparkStreaming: SparkStreamingConfig =
+    SparkStreamingConfig(applicationConfig.getConfig("sparkStreaming"))
+
+  val sparkStreamingKafka: SparkStreamingKafkaConfig =
+    SparkStreamingKafkaConfig(applicationConfig.getConfig("sparkStreamingKafka"))
+
+  val sinkKafka: KafkaSinkConfig =
+    KafkaSinkConfig(applicationConfig.getConfig("sinks.kafka"))
 
 }
 
