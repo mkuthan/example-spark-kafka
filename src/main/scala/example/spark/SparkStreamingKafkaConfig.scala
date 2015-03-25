@@ -18,7 +18,7 @@ package example.spark
 
 import com.typesafe.config.Config
 
-class SparkStreamingKafkaConfig(config: Config) {
+class SparkStreamingKafkaConfig(config: Config) extends Serializable {
 
   val metadataBrokerList: String = config.getString("metadata.broker.list")
 

@@ -18,7 +18,7 @@ package example.spark
 
 import com.typesafe.config.Config
 
-class SparkConfig(config: Config) {
+class SparkConfig(config: Config) extends Serializable {
 
   val master: String = config.getString("master")
 

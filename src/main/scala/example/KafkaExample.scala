@@ -19,8 +19,13 @@ package example
 import example.sinks.Sink
 import example.sinks.kafka.KafkaSink
 import example.spark._
+import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.streaming.Seconds
+import org.apache.spark.streaming.dstream.DStream
 
 class KafkaExample(config: ApplicationConfig) extends SparkStreamingApplication with SparkStreamingKafkaSupport {
+
+  import example.WordCount._
 
   override def sparkConfig: SparkConfig = config.spark
 
@@ -32,21 +37,27 @@ class KafkaExample(config: ApplicationConfig) extends SparkStreamingApplication 
     withSparkStreamingContext {
       (sparkContext, sparkStreamingContext) =>
 
-        val applicationConfigVar = sparkContext.broadcast(config)
+        val configVar = sparkContext.broadcast(config)
 
-        val messages = createDirectStream(sparkStreamingContext, config.inputTopic)
+        val lines = createDirectStream(sparkStreamingContext, config.inputTopic)
 
-        messages.foreachRDD { (rdd, time) =>
-          // val offsets = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
+        val words = mapLines(lines, config.stopWords)
 
-          rdd.foreachPartition { partition =>
-            Sink.using(KafkaSink(applicationConfigVar.value.sinkKafka)) { sink =>
-              partition.foreach { case (key, value) =>
-                //    sink.write(applicationConfigVar.value.outputTopic, key, value)
-              }
-            }
+        val results = countWords(words, Seconds(config.windowDuration), Seconds(config.slideDuration))
+
+        storeResults(results, configVar)
+    }
+  }
+
+  private def storeResults(results: DStream[WordCount], config: Broadcast[ApplicationConfig]): Unit = {
+    results.foreachRDD { rdd =>
+      rdd.foreachPartition { partition =>
+        Sink.using(KafkaSink(config.value.sinkKafka)) { sink =>
+          partition.foreach { wordCount =>
+            sink.write(config.value.outputTopic, wordCount.toString)
           }
         }
+      }
     }
   }
 }

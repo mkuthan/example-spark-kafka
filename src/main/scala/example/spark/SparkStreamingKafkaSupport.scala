@@ -16,18 +16,16 @@
 
 package example.spark
 
-import kafka.serializer.DefaultDecoder
+import kafka.serializer.StringDecoder
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka.KafkaUtils
 
 trait SparkStreamingKafkaSupport {
 
-  type DefaultDStream = DStream[(Array[Byte], Array[Byte])]
-
   def sparkStreamingKafkaConfig: SparkStreamingKafkaConfig
 
-  def createDirectStream(sparkStreamingContext: StreamingContext, topic: String): DefaultDStream = {
+  def createDirectStream(sparkStreamingContext: StreamingContext, topic: String): DStream[String] = {
 
     val kafkaParams = Map(
       "metadata.broker.list" -> sparkStreamingKafkaConfig.metadataBrokerList,
@@ -37,10 +35,10 @@ trait SparkStreamingKafkaSupport {
     val kafkaTopics = Set(topic)
 
     KafkaUtils
-      .createDirectStream[Array[Byte], Array[Byte], DefaultDecoder, DefaultDecoder](
+      .createDirectStream[String, String, StringDecoder, StringDecoder](
         sparkStreamingContext,
         kafkaParams,
-        kafkaTopics)
+        kafkaTopics).map(_._2)
   }
 
 }

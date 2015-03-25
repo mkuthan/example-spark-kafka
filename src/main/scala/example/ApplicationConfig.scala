@@ -16,9 +16,13 @@
 
 package example
 
+import java.util.concurrent.TimeUnit
+
 import com.typesafe.config._
 import example.sinks.kafka.KafkaSinkConfig
-import example.spark.{SparkStreamingKafkaConfig, SparkConfig, SparkStreamingConfig}
+import example.spark.{SparkConfig, SparkStreamingConfig, SparkStreamingKafkaConfig}
+
+import scala.collection.JavaConversions._
 
 class ApplicationConfig(config: Config) extends Serializable {
 
@@ -27,6 +31,12 @@ class ApplicationConfig(config: Config) extends Serializable {
   val inputTopic: String = applicationConfig.getString("input.topic")
 
   val outputTopic: String = applicationConfig.getString("output.topic")
+
+  val stopWords: Set[String] = applicationConfig.getStringList("stopWords").toSet
+
+  val windowDuration: Long = applicationConfig.getDuration("windowDuration", TimeUnit.SECONDS)
+
+  val slideDuration: Long = applicationConfig.getDuration("slideDuration", TimeUnit.SECONDS)
 
   val spark: SparkConfig =
     SparkConfig(applicationConfig.getConfig("spark"))

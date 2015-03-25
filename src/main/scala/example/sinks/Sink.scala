@@ -18,7 +18,7 @@ package example.sinks
 
 trait Sink {
 
-  def write(topic: String, key: Array[Byte], value: Array[Byte]): Unit
+  def write(topic: String, value: String): Unit
 
   def close(): Unit
 

@@ -21,10 +21,10 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
 import scala.collection.JavaConversions._
 
-class KafkaSink(producer: KafkaProducer[Array[Byte], Array[Byte]]) extends Sink {
+class KafkaSink(producer: KafkaProducer[String, String]) extends Sink {
 
-  override def write(topic: String, key: Array[Byte], value: Array[Byte]): Unit = {
-    producer.send(new ProducerRecord[Array[Byte], Array[Byte]](topic, key, value))
+  override def write(topic: String, value: String): Unit = {
+    producer.send(new ProducerRecord[String, String](topic, value))
     ()
   }
 
@@ -36,11 +36,11 @@ class KafkaSink(producer: KafkaProducer[Array[Byte], Array[Byte]]) extends Sink 
 
 object KafkaSink {
 
-  private val keySerializer = "org.apache.kafka.common.serialization.ByteArraySerializer"
-  private val valueSerializer = "org.apache.kafka.common.serialization.ByteArraySerializer"
+  private val keySerializer = "org.apache.kafka.common.serialization.StringSerializer"
+  private val valueSerializer = "org.apache.kafka.common.serialization.StringSerializer"
 
   def apply(config: KafkaSinkConfig): KafkaSink = {
-    val producer = new KafkaProducer[Array[Byte], Array[Byte]](
+    val producer = new KafkaProducer[String, String](
       Map(
         "bootstrap.servers" -> config.bootstrapServers,
         "acks" -> config.acks,

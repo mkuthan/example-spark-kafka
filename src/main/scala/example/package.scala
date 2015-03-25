@@ -14,32 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example
+package object example {
 
-import java.nio.ByteBuffer
-
-import example.sinks.kafka.KafkaSink
-
-object ExampleKafkaProducer {
-
-  val NumberOfEvents = 1000
-  val LongBufferSize = 8
-
-  def main(args: Array[String]): Unit = {
-    val applicationConfig = ApplicationConfig()
-    val sink = KafkaSink(applicationConfig.sinkKafka)
-
-    val valueBuffer = ByteBuffer.allocate(LongBufferSize)
-    (1 to NumberOfEvents).foreach { i =>
-      sink.write(
-        applicationConfig.inputTopic,
-        s"key: $i".getBytes,
-        valueBuffer.putLong(0, System.currentTimeMillis()).array()
-      )
-    }
-
-    sink.close()
+  implicit class StringUtils(val value: String) {
+    def strip(stripChars: String): String = value.stripPrefix(stripChars).stripSuffix(stripChars)
   }
-
 
 }

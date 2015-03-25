@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 
 import com.typesafe.config.Config
 
-class SparkStreamingConfig(config: Config) {
+class SparkStreamingConfig(config: Config) extends Serializable {
 
   val batchDuration: Long = config.getDuration("batchDuration", TimeUnit.SECONDS)
 
