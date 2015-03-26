@@ -16,6 +16,9 @@
 
 package example
 
+import example.sinks.Sink
+import example.sinks.kafka.KafkaSink
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.dstream.DStream
 
@@ -23,15 +26,19 @@ case class WordCount(word: String, count: Int)
 
 object WordCount {
 
-  def mapLines(lines: DStream[String], stopWords: Set[String]): DStream[String] = {
+  def mapLines(lines: DStream[String])(implicit config: Broadcast[ApplicationConfig]): DStream[String] = {
+    val stopWords = config.value.stopWords
+
     lines.flatMap(_.split("\\s"))
       .map(_.strip(",").strip(".").toLowerCase)
       .filter(!stopWords.contains(_)).filter(!_.isEmpty)
   }
 
-  def countWords(words: DStream[String],
-                 windowDuration: Duration,
-                 slideDuration: Duration): DStream[WordCount] = {
+  def countWords(words: DStream[String])(implicit config: Broadcast[ApplicationConfig]): DStream[WordCount] = {
+
+    val windowDuration = Seconds(config.value.windowDuration)
+
+    val slideDuration = Seconds(config.value.slideDuration)
 
     val reduce: (Int, Int) => Int = _ + _
 
@@ -40,5 +47,23 @@ object WordCount {
     words.map(x => (x, 1)).reduceByKeyAndWindow(reduce, inverseReduce, windowDuration, slideDuration).map {
       case (word: String, count: Int) => WordCount(word, count)
     }.filter(wordCount => wordCount.count > 0)
+  }
+
+  // TODO: make function testable
+  def storeResults(results: DStream[WordCount])(implicit config: Broadcast[ApplicationConfig]): Unit = {
+
+    val sinkKafka = config.value.sinkKafka
+
+    val outputTopic = config.value.outputTopic
+
+    results.foreachRDD { rdd =>
+      rdd.foreachPartition { partition =>
+        Sink.using(KafkaSink(sinkKafka)) { sink =>
+          partition.foreach { wordCount =>
+            sink.write(outputTopic, wordCount.toString)
+          }
+        }
+      }
+    }
   }
 }

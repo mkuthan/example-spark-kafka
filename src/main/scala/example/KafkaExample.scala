@@ -16,12 +16,7 @@
 
 package example
 
-import example.sinks.Sink
-import example.sinks.kafka.KafkaSink
 import example.spark._
-import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.streaming.Seconds
-import org.apache.spark.streaming.dstream.DStream
 
 class KafkaExample(config: ApplicationConfig) extends SparkStreamingApplication with SparkStreamingKafkaSupport {
 
@@ -37,27 +32,15 @@ class KafkaExample(config: ApplicationConfig) extends SparkStreamingApplication 
     withSparkStreamingContext {
       (sparkContext, sparkStreamingContext) =>
 
-        val configVar = sparkContext.broadcast(config)
+        implicit val configVar = sparkContext.broadcast(config)
 
         val lines = createDirectStream(sparkStreamingContext, config.inputTopic)
 
-        val words = mapLines(lines, config.stopWords)
+        val words = mapLines(lines)
 
-        val results = countWords(words, Seconds(config.windowDuration), Seconds(config.slideDuration))
+        val results = countWords(words)
 
-        storeResults(results, configVar)
-    }
-  }
-
-  private def storeResults(results: DStream[WordCount], config: Broadcast[ApplicationConfig]): Unit = {
-    results.foreachRDD { rdd =>
-      rdd.foreachPartition { partition =>
-        Sink.using(KafkaSink(config.value.sinkKafka)) { sink =>
-          partition.foreach { wordCount =>
-            sink.write(config.value.outputTopic, wordCount.toString)
-          }
-        }
-      }
+        storeResults(results)
     }
   }
 }
