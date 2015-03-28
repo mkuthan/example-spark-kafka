@@ -18,23 +18,23 @@ package example
 
 import example.spark._
 
-class StreamingJob(config: ApplicationConfig) extends SparkStreamingApplication with SparkStreamingKafkaSupport {
+class WordCountJob(context: JobContext) extends SparkStreamingApplication with SparkStreamingKafkaSupport {
 
   import example.WordCount._
 
-  override def sparkConfig: SparkConfig = config.spark
+  override def sparkConfig: SparkConfig = context.config.spark
 
-  override def sparkStreamingConfig: SparkStreamingConfig = config.sparkStreaming
+  override def sparkStreamingConfig: SparkStreamingConfig = context.config.sparkStreaming
 
-  override def sparkStreamingKafkaConfig: SparkStreamingKafkaConfig = config.sparkStreamingKafka
+  override def sparkStreamingKafkaConfig: SparkStreamingKafkaConfig = context.config.sparkStreamingKafka
 
   def start(): Unit = {
     withSparkStreamingContext {
       (sparkContext, sparkStreamingContext) =>
 
-        val lines = createDirectStream(sparkStreamingContext, config.inputTopic)
+        val lines = createDirectStream(sparkStreamingContext, context.config.inputTopic)
 
-        implicit val configVar = sparkContext.broadcast(config)
+        implicit val contextVar = sparkContext.broadcast(context)
 
         val words = mapLines(lines)
 
@@ -45,12 +45,13 @@ class StreamingJob(config: ApplicationConfig) extends SparkStreamingApplication 
   }
 }
 
-object StreamingJob {
+object WordCountJob {
 
   def main(args: Array[String]): Unit = {
-    val config = ApplicationConfig()
+    val config = JobConfig()
+    val context = JobContext(config)
 
-    val streamingJob = new StreamingJob(config)
+    val streamingJob = new WordCountJob(context)
     streamingJob.start()
   }
 

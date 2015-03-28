@@ -24,38 +24,38 @@ import example.spark.{SparkConfig, SparkStreamingConfig, SparkStreamingKafkaConf
 
 import scala.collection.JavaConversions._
 
-class ApplicationConfig(config: Config) extends Serializable {
+class JobConfig(applicationConfig: Config) extends Serializable {
 
-  private val applicationConfig = config.getConfig("example")
+  private val config = applicationConfig.getConfig("example")
 
-  val inputTopic: String = applicationConfig.getString("input.topic")
+  val inputTopic: String = config.getString("input.topic")
 
-  val outputTopic: String = applicationConfig.getString("output.topic")
+  val outputTopic: String = config.getString("output.topic")
 
-  val stopWords: Set[String] = applicationConfig.getStringList("stopWords").toSet
+  val stopWords: Set[String] = config.getStringList("stopWords").toSet
 
-  val windowDuration: Long = applicationConfig.getDuration("windowDuration", TimeUnit.SECONDS)
+  val windowDuration: Long = config.getDuration("windowDuration", TimeUnit.SECONDS)
 
-  val slideDuration: Long = applicationConfig.getDuration("slideDuration", TimeUnit.SECONDS)
+  val slideDuration: Long = config.getDuration("slideDuration", TimeUnit.SECONDS)
 
   val spark: SparkConfig =
-    SparkConfig(applicationConfig.getConfig("spark"))
+    SparkConfig(config.getConfig("spark"))
 
   val sparkStreaming: SparkStreamingConfig =
-    SparkStreamingConfig(applicationConfig.getConfig("sparkStreaming"))
+    SparkStreamingConfig(config.getConfig("sparkStreaming"))
 
   val sparkStreamingKafka: SparkStreamingKafkaConfig =
-    SparkStreamingKafkaConfig(applicationConfig.getConfig("sparkStreamingKafka"))
+    SparkStreamingKafkaConfig(config.getConfig("sparkStreamingKafka"))
 
   val sinkKafka: KafkaSinkConfig =
-    KafkaSinkConfig(applicationConfig.getConfig("sinks.kafka"))
+    KafkaSinkConfig(config.getConfig("sinks.kafka"))
 
 }
 
-object ApplicationConfig {
+object JobConfig {
 
-  def apply(): ApplicationConfig = apply(ConfigFactory.load())
+  def apply(): JobConfig = apply(ConfigFactory.load())
 
-  def apply(config: Config): ApplicationConfig = new ApplicationConfig(config)
+  def apply(applicationConfig: Config): JobConfig = new JobConfig(applicationConfig)
 
 }
