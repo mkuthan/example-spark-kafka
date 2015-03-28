@@ -57,6 +57,10 @@ object WordCount {
     val outputTopic = config.value.outputTopic
 
     results.foreachRDD { rdd =>
+      //rdd.foreach {
+      //  wordCount =>
+      //    sink.write(outputTopic, wordCount.toString)
+      //}
       rdd.foreachPartition { partition =>
         Sink.using(KafkaSink(sinkKafka)) { sink =>
           partition.foreach { wordCount =>

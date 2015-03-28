@@ -36,18 +36,19 @@ class KafkaSink(producer: KafkaProducer[String, String]) extends Sink {
 
 object KafkaSink {
 
-  private val keySerializer = "org.apache.kafka.common.serialization.StringSerializer"
-  private val valueSerializer = "org.apache.kafka.common.serialization.StringSerializer"
+  private val KeySerializer = "org.apache.kafka.common.serialization.StringSerializer"
+  private val ValueSerializer = "org.apache.kafka.common.serialization.StringSerializer"
 
   def apply(config: KafkaSinkConfig): KafkaSink = {
     val producer = new KafkaProducer[String, String](
       Map(
         "bootstrap.servers" -> config.bootstrapServers,
         "acks" -> config.acks,
-        "key.serializer" -> keySerializer,
-        "value.serializer" -> valueSerializer
+        "key.serializer" -> KeySerializer,
+        "value.serializer" -> ValueSerializer
       )
     )
+
     new KafkaSink(producer)
   }
 

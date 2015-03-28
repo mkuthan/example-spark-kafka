@@ -18,7 +18,7 @@ package example
 
 import example.spark._
 
-class KafkaExample(config: ApplicationConfig) extends SparkStreamingApplication with SparkStreamingKafkaSupport {
+class StreamingJob(config: ApplicationConfig) extends SparkStreamingApplication with SparkStreamingKafkaSupport {
 
   import example.WordCount._
 
@@ -32,9 +32,9 @@ class KafkaExample(config: ApplicationConfig) extends SparkStreamingApplication 
     withSparkStreamingContext {
       (sparkContext, sparkStreamingContext) =>
 
-        implicit val configVar = sparkContext.broadcast(config)
-
         val lines = createDirectStream(sparkStreamingContext, config.inputTopic)
+
+        implicit val configVar = sparkContext.broadcast(config)
 
         val words = mapLines(lines)
 
@@ -45,13 +45,13 @@ class KafkaExample(config: ApplicationConfig) extends SparkStreamingApplication 
   }
 }
 
-object KafkaExample {
+object StreamingJob {
 
   def main(args: Array[String]): Unit = {
     val config = ApplicationConfig()
 
-    val kafkaExample = new KafkaExample(config)
-    kafkaExample.start()
+    val streamingJob = new StreamingJob(config)
+    streamingJob.start()
   }
 
 }

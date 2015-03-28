@@ -26,6 +26,14 @@ object ApplicationBuild extends Build {
     val spark = "1.3.0"
   }
 
+  val projectName = "example-spark-kafka"
+
+  val common = Seq(
+    version := "1.0",
+    organization := "http://mkuthan.github.io/",
+    scalaVersion := "2.10.4"
+  )
+
   val customScalacOptions = Seq(
     "-deprecation",
     "-encoding", "UTF-8",
@@ -35,9 +43,9 @@ object ApplicationBuild extends Build {
     "-Xfuture",
     "-Xlint",
     "-Yno-adapted-args",
-    "-Ywarn-dead-code", // slow
+    "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
-    // "-Ywarn-unused-import", until scala 2.11 // slow
+    // "-Ywarn-unused-import",
     "-Ywarn-value-discard"
   )
 
@@ -64,20 +72,11 @@ object ApplicationBuild extends Build {
     "org.slf4j", "slf4j-log4j12"
   ))
 
-  lazy val main = Project(
-    id = "example-kafka",
-    base = file("."),
-    settings = Defaults.coreDefaultSettings ++ Seq(
-      version := "1.0",
-      organization := "http://mkuthan.github.io/",
-      scalaVersion := "2.10.4",
-      scalacOptions ++= customScalacOptions,
-      resolvers ++= customResolvers,
-      libraryDependencies ++= customLibraryDependencies,
-      parallelExecution in Test := false,
-      fork in Test := true
-    ) ++ scalastyleSettings
-  )
-
+  lazy val main = Project(projectName, base = file(".")).
+    settings(common: _*).
+    settings(scalacOptions ++= customScalacOptions).
+    settings(resolvers ++= customResolvers).
+    settings(libraryDependencies ++= customLibraryDependencies).
+    settings(scalastyleSettings: _*)
 }
 
