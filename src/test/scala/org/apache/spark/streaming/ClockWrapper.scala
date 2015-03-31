@@ -14,21 +14,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.mkuthan.spark
+package org.apache.spark.streaming
 
-import com.typesafe.config.Config
+import org.apache.spark.util.ManualClock
 
-case class SparkConfig(
-                        master: String,
-                        appName: String)
-  extends Serializable {
-}
+import scala.concurrent.duration.FiniteDuration
 
-object SparkConfig {
-  def apply(config: Config): SparkConfig = {
-    new SparkConfig(
-      config.getString("master"),
-      config.getString("appName")
-    )
-  }
+class ClockWrapper(ssc: StreamingContext) {
+
+  private val manualClock = ssc.scheduler.clock.asInstanceOf[ManualClock]
+
+  def advance(timeToAdd: FiniteDuration) = manualClock.advance(timeToAdd.toMillis)
+
 }

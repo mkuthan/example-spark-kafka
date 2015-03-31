@@ -20,31 +20,38 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.dstream.DStream
 
-case class WordCount(word: String, count: Int)
+case class WordCount(word: String, count: Int) extends Serializable
 
 object WordCount {
 
-  def mapLines(lines: DStream[String])(implicit config: Broadcast[JobConfig]): DStream[String] = {
-    val stopWords = config.value.stopWords
-
-    lines.flatMap(_.split("\\s"))
-      .map(_.strip(",").strip(".").toLowerCase)
-      .filter(!stopWords.contains(_)).filter(!_.isEmpty)
-  }
-
-  def countWords(words: DStream[String])(implicit config: Broadcast[JobConfig]): DStream[WordCount] = {
-
-    val windowDuration = Seconds(config.value.windowDuration)
-
-    val slideDuration = Seconds(config.value.slideDuration)
+  def countWords(
+                  lines: DStream[String],
+                  stopWords: Broadcast[Set[String]],
+                  windowDuration: Broadcast[Long],
+                  slideDuration: Broadcast[Long]): DStream[WordCount] = {
 
     val reduce: (Int, Int) => Int = _ + _
 
-    val inverseReduce: (Int, Int) => Int = _ - _
+    val invReduce: (Int, Int) => Int = _ - _
 
-    words.map(x => (x, 1)).reduceByKeyAndWindow(reduce, inverseReduce, windowDuration, slideDuration).map {
-      case (word: String, count: Int) => WordCount(word, count)
-    }.filter(wordCount => wordCount.count > 0)
+    val allWords = lines.flatMap { line =>
+      line.split("\\s")
+    }.map { word =>
+      word.strip(",").strip(".").toLowerCase
+    }
+
+    val filteredWords = allWords.
+      filter(word => !stopWords.value.contains(word)).
+      filter(word => !word.isEmpty)
+
+    val reducedWords = filteredWords.
+      map(word => (word, 1)).
+      reduceByKeyAndWindow(reduce, invReduce, Seconds(windowDuration.value), Seconds(slideDuration.value)).
+      map { case (word: String, count: Int) => WordCount(word, count) }
+
+    val relevantWords = reducedWords.filter(wordCount => wordCount.count > 0)
+    val sortedWords = relevantWords.transform(rdd => rdd.sortBy(wordCount => wordCount.count, ascending = false))
+
+    sortedWords
   }
-
 }

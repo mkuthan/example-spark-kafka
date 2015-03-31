@@ -25,38 +25,38 @@ import org.mkuthan.spark.{SparkConfig, SparkStreamingConfig}
 
 import scala.collection.JavaConversions._
 
-class JobConfig(applicationConfig: Config) extends Serializable {
-
-  private val config = applicationConfig.getConfig("example")
-
-  val inputTopic: String = config.getString("input.topic")
-
-  val outputTopic: String = config.getString("output.topic")
-
-  val stopWords: Set[String] = config.getStringList("stopWords").toSet
-
-  val windowDuration: Long = config.getDuration("windowDuration", TimeUnit.SECONDS)
-
-  val slideDuration: Long = config.getDuration("slideDuration", TimeUnit.SECONDS)
-
-  val spark: SparkConfig =
-    SparkConfig(config.getConfig("spark"))
-
-  val sparkStreaming: SparkStreamingConfig =
-    SparkStreamingConfig(config.getConfig("sparkStreaming"))
-
-  val sourceKafka: KafkaDStreamSourceConfig =
-    KafkaDStreamSourceConfig(config.getConfig("sources.kafka"))
-
-  val sinkKafka: KafkaDStreamSinkConfig =
-    KafkaDStreamSinkConfig(config.getConfig("sinks.kafka"))
-
+case class JobConfig(
+                      inputTopic: String,
+                      outputTopic: String,
+                      stopWords: Set[String],
+                      windowDuration: Long,
+                      slideDuration: Long,
+                      spark: SparkConfig,
+                      sparkStreaming: SparkStreamingConfig,
+                      sourceKafka: KafkaDStreamSourceConfig,
+                      sinkKafka: KafkaDStreamSinkConfig)
+  extends Serializable {
 }
 
 object JobConfig {
 
   def apply(): JobConfig = apply(ConfigFactory.load())
 
-  def apply(applicationConfig: Config): JobConfig = new JobConfig(applicationConfig)
+  def apply(applicationConfig: Config): JobConfig = {
+
+    val config = applicationConfig.getConfig("example")
+
+    new JobConfig(
+      config.getString("input.topic"),
+      config.getString("output.topic"),
+      config.getStringList("stopWords").toSet,
+      config.getDuration("windowDuration", TimeUnit.SECONDS),
+      config.getDuration("slideDuration", TimeUnit.SECONDS),
+      SparkConfig(config.getConfig("spark")),
+      SparkStreamingConfig(config.getConfig("sparkStreaming")),
+      KafkaDStreamSourceConfig(config.getConfig("sources.kafka")),
+      KafkaDStreamSinkConfig(config.getConfig("sinks.kafka"))
+    )
+  }
 
 }

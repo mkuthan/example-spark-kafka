@@ -18,14 +18,17 @@ package org.mkuthan.spark.sinks.kafka
 
 import com.typesafe.config.Config
 
-class KafkaDStreamSinkConfig(config: Config) extends Serializable {
-
-  val bootstrapServers: String = config.getString("bootstrap.servers")
-
-  val acks: String = config.getString("acks")
-
+case class KafkaDStreamSinkConfig(
+                                   bootstrapServers: String,
+                                   acks: String
+                                   ) extends Serializable {
 }
 
 object KafkaDStreamSinkConfig {
-  def apply(config: Config): KafkaDStreamSinkConfig = new KafkaDStreamSinkConfig(config)
+  def apply(config: Config): KafkaDStreamSinkConfig = {
+    new KafkaDStreamSinkConfig(
+      config.getString("bootstrap.servers"),
+      config.getString("acks")
+    )
+  }
 }

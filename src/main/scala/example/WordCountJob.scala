@@ -28,27 +28,26 @@ class WordCountJob(
                     sink: DStreamSink[WordCount])
   extends SparkStreamingApplication {
 
-  import example.WordCount._
-
   override def sparkConfig: SparkConfig = config.spark
 
   override def sparkStreamingConfig: SparkStreamingConfig = config.sparkStreaming
 
   def start(): Unit = {
-    withSparkStreamingContext {
-      (sc, ssc) =>
+    withSparkStreamingContext { (sc, ssc) =>
 
-        val lines = source.createSource(ssc, config.inputTopic)
+      val lines = source.createSource(ssc, config.inputTopic)
 
-        implicit val configVar = sc.broadcast(config)
+      val countedWords = WordCount.countWords(
+        lines,
+        sc.broadcast(config.stopWords),
+        sc.broadcast(config.windowDuration),
+        sc.broadcast(config.slideDuration)
+      )
 
-        val words = mapLines(lines)
-
-        val countedWords = countWords(words)
-
-        sink.write(ssc, config.outputTopic, countedWords)
+      sink.write(ssc, config.outputTopic, countedWords)
     }
   }
+
 }
 
 object WordCountJob {

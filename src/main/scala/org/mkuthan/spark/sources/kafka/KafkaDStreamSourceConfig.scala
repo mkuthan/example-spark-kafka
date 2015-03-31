@@ -18,14 +18,17 @@ package org.mkuthan.spark.sources.kafka
 
 import com.typesafe.config.Config
 
-class KafkaDStreamSourceConfig(config: Config) extends Serializable {
-
-  val metadataBrokerList: String = config.getString("metadata.broker.list")
-
-  val autoOffsetReset: String = config.getString("auto.offset.reset")
-
+case class KafkaDStreamSourceConfig(
+                                     metadataBrokerList: String,
+                                     autoOffsetReset: String)
+  extends Serializable {
 }
 
 object KafkaDStreamSourceConfig {
-  def apply(config: Config): KafkaDStreamSourceConfig = new KafkaDStreamSourceConfig(config)
+  def apply(config: Config): KafkaDStreamSourceConfig = {
+    new KafkaDStreamSourceConfig(
+      config.getString("metadata.broker.list"),
+      config.getString("auto.offset.reset")
+    )
+  }
 }

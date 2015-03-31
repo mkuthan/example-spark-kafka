@@ -20,14 +20,17 @@ import java.util.concurrent.TimeUnit
 
 import com.typesafe.config.Config
 
-class SparkStreamingConfig(config: Config) extends Serializable {
-
-  val batchDuration: Long = config.getDuration("batchDuration", TimeUnit.SECONDS)
-
-  val checkpoint: String = config.getString("checkpoint")
-
+case class SparkStreamingConfig(
+                                 batchDuration: Long,
+                                 checkpoint: String)
+  extends Serializable {
 }
 
 object SparkStreamingConfig {
-  def apply(config: Config): SparkStreamingConfig = new SparkStreamingConfig(config)
+  def apply(config: Config): SparkStreamingConfig = {
+    new SparkStreamingConfig(
+      config.getDuration("batchDuration", TimeUnit.SECONDS),
+      config.getString("checkpoint")
+    )
+  }
 }
