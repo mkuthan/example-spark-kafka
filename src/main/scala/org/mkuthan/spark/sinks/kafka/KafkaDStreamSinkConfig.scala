@@ -14,13 +14,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.sources
+package org.mkuthan.spark.sinks.kafka
 
-import org.apache.spark.streaming.StreamingContext
-import org.apache.spark.streaming.dstream.DStream
+import com.typesafe.config.Config
 
-trait DStreamSource {
+class KafkaDStreamSinkConfig(config: Config) extends Serializable {
 
-  def createSource(ssc: StreamingContext, topic: String): DStream[String]
+  val bootstrapServers: String = config.getString("bootstrap.servers")
 
+  val acks: String = config.getString("acks")
+
+}
+
+object KafkaDStreamSinkConfig {
+  def apply(config: Config): KafkaDStreamSinkConfig = new KafkaDStreamSinkConfig(config)
 }

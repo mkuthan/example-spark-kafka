@@ -14,18 +14,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.sources.kafka
+package org.mkuthan.spark
 
 import com.typesafe.config.Config
 
-class KafkaDStreamSourceConfig(config: Config) extends Serializable {
+class SparkConfig(config: Config) extends Serializable {
 
-  val metadataBrokerList: String = config.getString("metadata.broker.list")
+  val master: String = config.getString("master")
 
-  val autoOffsetReset: String = config.getString("auto.offset.reset")
+  val appName: String = config.getString("appName")
 
 }
 
-object KafkaDStreamSourceConfig {
-  def apply(config: Config): KafkaDStreamSourceConfig = new KafkaDStreamSourceConfig(config)
+object SparkConfig {
+  def apply(config: Config): SparkConfig = new SparkConfig(config)
 }

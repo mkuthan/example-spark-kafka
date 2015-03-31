@@ -14,18 +14,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.sinks.kafka
+package org.mkuthan.spark.sources.kafka
 
 import com.typesafe.config.Config
 
-class KafkaDStreamSinkConfig(config: Config) extends Serializable {
+class KafkaDStreamSourceConfig(config: Config) extends Serializable {
 
-  val bootstrapServers: String = config.getString("bootstrap.servers")
+  val metadataBrokerList: String = config.getString("metadata.broker.list")
 
-  val acks: String = config.getString("acks")
+  val autoOffsetReset: String = config.getString("auto.offset.reset")
 
 }
 
-object KafkaDStreamSinkConfig {
-  def apply(config: Config): KafkaDStreamSinkConfig = new KafkaDStreamSinkConfig(config)
+object KafkaDStreamSourceConfig {
+  def apply(config: Config): KafkaDStreamSourceConfig = new KafkaDStreamSourceConfig(config)
 }

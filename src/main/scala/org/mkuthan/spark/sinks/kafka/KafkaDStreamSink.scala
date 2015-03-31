@@ -14,12 +14,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.sinks.kafka
+package org.mkuthan.spark.sinks.kafka
 
-import example.sinks.DStreamSink
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
+import org.mkuthan.spark.sinks.DStreamSink
 
 class KafkaDStreamSink[A](config: KafkaDStreamSinkConfig) extends DStreamSink[A] {
 

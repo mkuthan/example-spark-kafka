@@ -19,9 +19,9 @@ package example
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.config._
-import example.sinks.kafka.KafkaDStreamSinkConfig
-import example.sources.kafka.KafkaDStreamSourceConfig
-import example.spark._
+import org.mkuthan.spark.sinks.kafka.KafkaDStreamSinkConfig
+import org.mkuthan.spark.sources.kafka.KafkaDStreamSourceConfig
+import org.mkuthan.spark.{SparkConfig, SparkStreamingConfig}
 
 import scala.collection.JavaConversions._
 

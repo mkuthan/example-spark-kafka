@@ -31,7 +31,9 @@ object ApplicationBuild extends Build {
   val common = Seq(
     version := "1.0",
     organization := "http://mkuthan.github.io/",
-    scalaVersion := "2.10.4"
+    scalaVersion := "2.10.4",
+    parallelExecution in Test := false,
+    fork in Test := true
   )
 
   val customScalacOptions = Seq(
@@ -67,7 +69,9 @@ object ApplicationBuild extends Build {
     "com.typesafe" % "config" % "1.2.1",
 
     "org.slf4j" % "slf4j-api" % "1.7.10",
-    "ch.qos.logback" % "logback-classic" % "1.1.2"
+    "ch.qos.logback" % "logback-classic" % "1.1.2",
+
+    "org.scalatest" %% "scalatest" % "2.2.4" % "test"
   ).map(_.exclude(
     "org.slf4j", "slf4j-log4j12"
   ))

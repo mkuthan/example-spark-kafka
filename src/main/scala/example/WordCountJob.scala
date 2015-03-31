@@ -16,11 +16,11 @@
 
 package example
 
-import example.sinks.DStreamSink
-import example.sinks.kafka.KafkaDStreamSink
-import example.sources.DStreamSource
-import example.sources.kafka.KafkaDStreamSource
-import example.spark._
+import org.mkuthan.spark._
+import org.mkuthan.spark.sinks.DStreamSink
+import org.mkuthan.spark.sinks.kafka.KafkaDStreamSink
+import org.mkuthan.spark.sources.DStreamSource
+import org.mkuthan.spark.sources.kafka.KafkaDStreamSource
 
 class WordCountJob(
                     config: JobConfig,

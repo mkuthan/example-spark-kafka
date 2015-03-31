@@ -14,18 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.spark
+package org.mkuthan.spark.sinks
 
-import com.typesafe.config.Config
+import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.dstream.DStream
 
-class SparkConfig(config: Config) extends Serializable {
+trait DStreamSink[A] {
 
-  val master: String = config.getString("master")
+  def write(ssc: StreamingContext, topic: String, stream: DStream[A]): Unit
 
-  val appName: String = config.getString("appName")
-
-}
-
-object SparkConfig {
-  def apply(config: Config): SparkConfig = new SparkConfig(config)
 }

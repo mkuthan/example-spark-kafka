@@ -14,13 +14,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.sinks
+package org.mkuthan.spark
 
-import org.apache.spark.streaming.StreamingContext
-import org.apache.spark.streaming.dstream.DStream
+import org.apache.spark.SparkContext
+import org.apache.spark.streaming.{Seconds, StreamingContext}
 
-trait DStreamSink[A] {
+trait SparkStreamingApplication extends SparkApplication {
 
-  def write(ssc: StreamingContext, topic: String, stream: DStream[A]): Unit
+  def sparkStreamingConfig: SparkStreamingConfig
+
+  def withSparkStreamingContext(f: (SparkContext, StreamingContext) => Unit): Unit = {
+    withSparkContext { sc =>
+      val ssc = new StreamingContext(sc, Seconds(sparkStreamingConfig.batchDuration))
+      ssc.checkpoint(sparkStreamingConfig.checkpoint)
+
+      f(sc, ssc)
+
+      ssc.start()
+      ssc.awaitTermination()
+    }
+  }
 
 }

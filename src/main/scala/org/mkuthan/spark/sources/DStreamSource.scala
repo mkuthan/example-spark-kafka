@@ -14,16 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.sinks.kafka
+package org.mkuthan.spark.sources
 
-import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.dstream.DStream
 
-import scala.collection.JavaConversions._
+trait DStreamSource {
 
-// TODO: close producer gracefully (shutdown hook on spark executor?)
-class KafkaProducerSingleton(config: Map[String, Object]) extends Serializable {
-
-  @transient
-  lazy val producerHolder: KafkaProducer[String, String] = new KafkaProducer[String, String](config)
+  def createSource(ssc: StreamingContext, topic: String): DStream[String]
 
 }

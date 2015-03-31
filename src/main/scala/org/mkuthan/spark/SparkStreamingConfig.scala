@@ -14,25 +14,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.spark
+package org.mkuthan.spark
 
-import org.apache.spark.SparkContext
-import org.apache.spark.streaming.{Seconds, StreamingContext}
+import java.util.concurrent.TimeUnit
 
-trait SparkStreamingApplication extends SparkApplication {
+import com.typesafe.config.Config
 
-  def sparkStreamingConfig: SparkStreamingConfig
+class SparkStreamingConfig(config: Config) extends Serializable {
 
-  def withSparkStreamingContext(f: (SparkContext, StreamingContext) => Unit): Unit = {
-    withSparkContext { sc =>
-      val ssc = new StreamingContext(sc, Seconds(sparkStreamingConfig.batchDuration))
-      ssc.checkpoint(sparkStreamingConfig.checkpoint)
+  val batchDuration: Long = config.getDuration("batchDuration", TimeUnit.SECONDS)
 
-      f(sc, ssc)
+  val checkpoint: String = config.getString("checkpoint")
 
-      ssc.start()
-      ssc.awaitTermination()
-    }
-  }
+}
 
+object SparkStreamingConfig {
+  def apply(config: Config): SparkStreamingConfig = new SparkStreamingConfig(config)
 }

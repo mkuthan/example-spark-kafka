@@ -14,13 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.sources.kafka
+package org.mkuthan.spark.sources.kafka
 
-import example.sources.DStreamSource
 import kafka.serializer.StringDecoder
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka.KafkaUtils
+import org.mkuthan.spark.sources.DStreamSource
 
 class KafkaDStreamSource(config: KafkaDStreamSourceConfig) extends DStreamSource {
 
