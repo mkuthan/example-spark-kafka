@@ -14,25 +14,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.spark
+package example.sinks.kafka
 
-import org.apache.spark.SparkContext
-import org.apache.spark.streaming.{Seconds, StreamingContext}
+import org.apache.kafka.clients.producer.KafkaProducer
 
-trait SparkStreamingApplication extends SparkApplication {
+import scala.collection.JavaConversions._
 
-  def sparkStreamingConfig: SparkStreamingConfig
+// TODO: close producer gracefully (shutdown hook on spark executor?)
+class KafkaProducerSingleton(config: Map[String, Object]) extends Serializable {
 
-  def withSparkStreamingContext(f: (SparkContext, StreamingContext) => Unit): Unit = {
-    withSparkContext { sc =>
-      val ssc = new StreamingContext(sc, Seconds(sparkStreamingConfig.batchDuration))
-      ssc.checkpoint(sparkStreamingConfig.checkpoint)
-
-      f(sc, ssc)
-
-      ssc.start()
-      ssc.awaitTermination()
-    }
-  }
+  @transient
+  lazy val producerHolder: KafkaProducer[String, String] = new KafkaProducer[String, String](config)
 
 }

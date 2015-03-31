@@ -19,8 +19,9 @@ package example
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.config._
-import example.sinks.kafka.KafkaSinkConfig
-import example.spark.{SparkConfig, SparkStreamingConfig, SparkStreamingKafkaConfig}
+import example.sinks.kafka.KafkaDStreamSinkConfig
+import example.sources.kafka.KafkaDStreamSourceConfig
+import example.spark._
 
 import scala.collection.JavaConversions._
 
@@ -44,11 +45,11 @@ class JobConfig(applicationConfig: Config) extends Serializable {
   val sparkStreaming: SparkStreamingConfig =
     SparkStreamingConfig(config.getConfig("sparkStreaming"))
 
-  val sparkStreamingKafka: SparkStreamingKafkaConfig =
-    SparkStreamingKafkaConfig(config.getConfig("sparkStreamingKafka"))
+  val sourceKafka: KafkaDStreamSourceConfig =
+    KafkaDStreamSourceConfig(config.getConfig("sources.kafka"))
 
-  val sinkKafka: KafkaSinkConfig =
-    KafkaSinkConfig(config.getConfig("sinks.kafka"))
+  val sinkKafka: KafkaDStreamSinkConfig =
+    KafkaDStreamSinkConfig(config.getConfig("sinks.kafka"))
 
 }
 

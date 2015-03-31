@@ -14,25 +14,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.spark
+package example.sinks.kafka
 
-import org.apache.spark.SparkContext
-import org.apache.spark.streaming.{Seconds, StreamingContext}
+import com.typesafe.config.Config
 
-trait SparkStreamingApplication extends SparkApplication {
+class KafkaDStreamSinkConfig(config: Config) extends Serializable {
 
-  def sparkStreamingConfig: SparkStreamingConfig
+  val bootstrapServers: String = config.getString("bootstrap.servers")
 
-  def withSparkStreamingContext(f: (SparkContext, StreamingContext) => Unit): Unit = {
-    withSparkContext { sc =>
-      val ssc = new StreamingContext(sc, Seconds(sparkStreamingConfig.batchDuration))
-      ssc.checkpoint(sparkStreamingConfig.checkpoint)
+  val acks: String = config.getString("acks")
 
-      f(sc, ssc)
+}
 
-      ssc.start()
-      ssc.awaitTermination()
-    }
-  }
-
+object KafkaDStreamSinkConfig {
+  def apply(config: Config): KafkaDStreamSinkConfig = new KafkaDStreamSinkConfig(config)
 }

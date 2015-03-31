@@ -14,31 +14,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.spark
+package example.sources.kafka
 
+import example.sources.DStreamSource
 import kafka.serializer.StringDecoder
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka.KafkaUtils
 
-trait SparkStreamingKafkaSupport {
+class KafkaDStreamSource(config: KafkaDStreamSourceConfig) extends DStreamSource {
 
-  def sparkStreamingKafkaConfig: SparkStreamingKafkaConfig
-
-  def createDirectStream(sparkStreamingContext: StreamingContext, topic: String): DStream[String] = {
-
+  override def createSource(ssc: StreamingContext, topic: String): DStream[String] = {
     val kafkaParams = Map(
-      "metadata.broker.list" -> sparkStreamingKafkaConfig.metadataBrokerList,
-      "auto.offset.reset" -> sparkStreamingKafkaConfig.autoOffsetReset
+      "metadata.broker.list" -> config.metadataBrokerList,
+      "auto.offset.reset" -> config.autoOffsetReset
     )
 
     val kafkaTopics = Set(topic)
 
     KafkaUtils
       .createDirectStream[String, String, StringDecoder, StringDecoder](
-        sparkStreamingContext,
+        ssc,
         kafkaParams,
         kafkaTopics).map(_._2)
   }
 
+}
+
+object KafkaDStreamSource {
+  def apply(config: KafkaDStreamSourceConfig): KafkaDStreamSource = new KafkaDStreamSource(config)
 }

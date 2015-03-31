@@ -27,9 +27,9 @@ trait SparkApplication {
       .setMaster(sparkConfig.master)
       .setAppName(sparkConfig.appName)
 
-    val sparkContext = new SparkContext(sparkConf)
+    val sc = new SparkContext(sparkConf)
 
-    f(sparkContext)
+    f(sc)
   }
 
 }

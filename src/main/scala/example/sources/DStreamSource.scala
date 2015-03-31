@@ -14,18 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package example.spark
+package example.sources
 
-import com.typesafe.config.Config
+import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.dstream.DStream
 
-class SparkStreamingKafkaConfig(config: Config) extends Serializable {
+trait DStreamSource {
 
-  val metadataBrokerList: String = config.getString("metadata.broker.list")
+  def createSource(ssc: StreamingContext, topic: String): DStream[String]
 
-  val autoOffsetReset: String = config.getString("auto.offset.reset")
-
-}
-
-object SparkStreamingKafkaConfig {
-  def apply(config: Config): SparkStreamingKafkaConfig = new SparkStreamingKafkaConfig(config)
 }

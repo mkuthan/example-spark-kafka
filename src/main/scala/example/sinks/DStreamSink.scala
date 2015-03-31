@@ -16,22 +16,11 @@
 
 package example.sinks
 
-trait Sink {
+import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.dstream.DStream
 
-  def write(topic: String, value: String): Unit
+trait DStreamSink[A] {
 
-  def close(): Unit
-
-}
-
-object Sink {
-
-  def using[A](r: Sink)(f: Sink => A): A = {
-    try {
-      f(r)
-    } finally {
-      r.close()
-    }
-  }
+  def write(ssc: StreamingContext, topic: String, stream: DStream[A]): Unit
 
 }

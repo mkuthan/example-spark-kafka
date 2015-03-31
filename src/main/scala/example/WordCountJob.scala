@@ -16,31 +16,37 @@
 
 package example
 
+import example.sinks.DStreamSink
+import example.sinks.kafka.KafkaDStreamSink
+import example.sources.DStreamSource
+import example.sources.kafka.KafkaDStreamSource
 import example.spark._
 
-class WordCountJob(context: JobContext) extends SparkStreamingApplication with SparkStreamingKafkaSupport {
+class WordCountJob(
+                    config: JobConfig,
+                    source: DStreamSource,
+                    sink: DStreamSink[WordCount])
+  extends SparkStreamingApplication {
 
   import example.WordCount._
 
-  override def sparkConfig: SparkConfig = context.config.spark
+  override def sparkConfig: SparkConfig = config.spark
 
-  override def sparkStreamingConfig: SparkStreamingConfig = context.config.sparkStreaming
-
-  override def sparkStreamingKafkaConfig: SparkStreamingKafkaConfig = context.config.sparkStreamingKafka
+  override def sparkStreamingConfig: SparkStreamingConfig = config.sparkStreaming
 
   def start(): Unit = {
     withSparkStreamingContext {
-      (sparkContext, sparkStreamingContext) =>
+      (sc, ssc) =>
 
-        val lines = createDirectStream(sparkStreamingContext, context.config.inputTopic)
+        val lines = source.createSource(ssc, config.inputTopic)
 
-        implicit val contextVar = sparkContext.broadcast(context)
+        implicit val configVar = sc.broadcast(config)
 
         val words = mapLines(lines)
 
-        val results = countWords(words)
+        val countedWords = countWords(words)
 
-        storeResults(results)
+        sink.write(ssc, config.outputTopic, countedWords)
     }
   }
 }
@@ -49,9 +55,11 @@ object WordCountJob {
 
   def main(args: Array[String]): Unit = {
     val config = JobConfig()
-    val context = JobContext(config)
 
-    val streamingJob = new WordCountJob(context)
+    val source = KafkaDStreamSource(config.sourceKafka)
+    val sink = KafkaDStreamSink[WordCount](config.sinkKafka)
+
+    val streamingJob = new WordCountJob(config, source, sink)
     streamingJob.start()
   }
 

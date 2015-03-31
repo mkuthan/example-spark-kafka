@@ -24,19 +24,19 @@ case class WordCount(word: String, count: Int)
 
 object WordCount {
 
-  def mapLines(lines: DStream[String])(implicit context: Broadcast[JobContext]): DStream[String] = {
-    val stopWords = context.value.config.stopWords
+  def mapLines(lines: DStream[String])(implicit config: Broadcast[JobConfig]): DStream[String] = {
+    val stopWords = config.value.stopWords
 
     lines.flatMap(_.split("\\s"))
       .map(_.strip(",").strip(".").toLowerCase)
       .filter(!stopWords.contains(_)).filter(!_.isEmpty)
   }
 
-  def countWords(words: DStream[String])(implicit context: Broadcast[JobContext]): DStream[WordCount] = {
+  def countWords(words: DStream[String])(implicit config: Broadcast[JobConfig]): DStream[WordCount] = {
 
-    val windowDuration = Seconds(context.value.config.windowDuration)
+    val windowDuration = Seconds(config.value.windowDuration)
 
-    val slideDuration = Seconds(context.value.config.slideDuration)
+    val slideDuration = Seconds(config.value.slideDuration)
 
     val reduce: (Int, Int) => Int = _ + _
 
@@ -47,13 +47,4 @@ object WordCount {
     }.filter(wordCount => wordCount.count > 0)
   }
 
-  def storeResults(results: DStream[WordCount])(implicit context: Broadcast[JobContext]): Unit = {
-    results.foreachRDD { rdd =>
-      rdd.foreach { wordCount =>
-        val sink = context.value.sink
-        val outputTopic = context.value.config.outputTopic
-        sink.write(outputTopic, wordCount.toString)
-      }
-    }
-  }
 }
