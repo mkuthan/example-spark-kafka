@@ -16,6 +16,7 @@
 
 package example
 
+import example.WordCount.WordCount
 import org.mkuthan.spark._
 import org.mkuthan.spark.sinks.DStreamSink
 import org.mkuthan.spark.sinks.kafka.KafkaDStreamSink

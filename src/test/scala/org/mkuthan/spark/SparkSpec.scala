@@ -22,7 +22,7 @@ import org.scalatest._
 trait SparkSpec extends BeforeAndAfterAll {
   this: Suite =>
 
-  private val master = "local[2]"
+  private val master = "local[4]"
   private val appName = this.getClass.getSimpleName
 
   private var _sc: SparkContext = _

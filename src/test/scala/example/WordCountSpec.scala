@@ -16,6 +16,7 @@
 
 package example
 
+import example.WordCount.WordCount
 import org.apache.spark.rdd.RDD
 import org.mkuthan.spark.SparkStreamingSpec
 import org.scalatest._
@@ -60,7 +61,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     clock.advance(slideDuration.seconds)
     eventually {
       output should contain only (
-        WordCount("spark", 1))
+        ("spark", 1))
     }
 
     When("second set of words queued")
@@ -70,8 +71,8 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     clock.advance(slideDuration.seconds)
     eventually {
       output should contain only(
-        WordCount("spark", 2),
-        WordCount("streaming", 1))
+        ("spark", 2),
+        ("streaming", 1))
     }
 
     When("nothing more queued")
@@ -80,8 +81,8 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     clock.advance(slideDuration.seconds)
     eventually {
       output should contain only(
-        WordCount("spark", 1),
-        WordCount("streaming", 1))
+        ("spark", 1),
+        ("streaming", 1))
     }
 
     When("nothing more queued")
@@ -92,6 +93,8 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
       output shouldBe empty
     }
 
+
+    //ssc.awaitTermination()
   }
 
 }
