@@ -7,10 +7,12 @@
 
   <logger name="org.apache.spark" level="WARN"/>
 
+  <!--
   <logger name="org.apache.spark.SparkContext" level="INFO"/>
   <logger name="org.apache.spark.streaming.StreamingContext" level="INFO"/>
 
   <logger name="org.apache.spark.util.Utils" level="INFO"/>
+  -->
 
   <root level="OFF">
     <appender-ref ref="STDOUT"/>

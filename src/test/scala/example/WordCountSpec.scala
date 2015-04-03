@@ -28,17 +28,15 @@ import scala.concurrent.duration._
 
 class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen with Matchers with Eventually {
 
-  val windowDuration = 4L
-  val slideDuration = 2L
+  val DefaultWindowDuration = 4L
+  val DefaultSlideDuration = 2L
+  val DefaultStopWords = Set[String]()
 
   // default timeout for eventually trait
   implicit override val patienceConfig =
     PatienceConfig(timeout = scaled(Span(1500, Millis)))
 
-  "Sample set" should "be counted" in {
-    Given("stop words")
-    val stopWords = Set("apache")
-
+  "Sample set" should "be counted over sliding window" in {
     Given("streaming context is initialized")
     val input = mutable.Queue[RDD[String]]()
 
@@ -47,54 +45,102 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
 
     WordCount.countWords(
       ssc.queueStream(input),
-      sc.broadcast(stopWords),
-      sc.broadcast(windowDuration),
-      sc.broadcast(slideDuration)
+      sc.broadcast(DefaultStopWords),
+      sc.broadcast(DefaultWindowDuration),
+      sc.broadcast(DefaultSlideDuration)
     ).foreachRDD(rdd => output = rdd.collect())
 
     ssc.start()
 
     When("first set of words queued")
-    input += sc.makeRDD(Seq("apache", "spark"))
+    input += sc.makeRDD(Seq("apache"))
 
     Then("words counted after first slide")
-    clock.advance(slideDuration.seconds)
+    clock.advance(DefaultSlideDuration.seconds)
     eventually {
       output should contain only (
-        ("spark", 1))
+        ("apache", 1))
     }
 
     When("second set of words queued")
-    input += sc.makeRDD(Seq("apache", "spark", "streaming"))
+    input += sc.makeRDD(Seq("apache", "spark"))
 
     Then("words counted after second slide")
-    clock.advance(slideDuration.seconds)
+    clock.advance(DefaultSlideDuration.seconds)
     eventually {
       output should contain only(
-        ("spark", 2),
-        ("streaming", 1))
+        ("apache", 2),
+        ("spark", 1))
     }
 
     When("nothing more queued")
 
     Then("word counted after third slide")
-    clock.advance(slideDuration.seconds)
+    clock.advance(DefaultSlideDuration.seconds)
     eventually {
       output should contain only(
-        ("spark", 1),
-        ("streaming", 1))
+        ("apache", 1),
+        ("spark", 1))
     }
 
     When("nothing more queued")
 
     Then("word counted after fourth slide")
-    clock.advance(slideDuration.seconds)
+    clock.advance(DefaultSlideDuration.seconds)
     eventually {
       output shouldBe empty
     }
 
-
     //ssc.awaitTermination()
+  }
+
+  "Line" should "be split into words" in {
+    val line = Seq("To be or not to be, that is the question")
+
+    val words = WordCount.splitLine(sc.parallelize(line)).collect()
+
+    words shouldBe Array("To", "be", "or", "not", "to", "be", "", "that", "is", "the", "question")
+  }
+
+  "Empty words" should "be skipped" in {
+    val words = Seq("before", "", "after")
+
+    val filteredWords = WordCount.skipEmptyWords(sc.parallelize(words)).collect()
+
+    filteredWords shouldBe Array("before", "after")
+  }
+
+  "Stop words" should "be skipped" in {
+    val line = Seq("The", "Beatles", "were", "an", "English", "rock", "band")
+    val stopWords = Set("The", "an")
+
+    val filteredWords = WordCount.skipStopWords(sc.broadcast(stopWords))(sc.parallelize(line)).collect()
+
+    filteredWords shouldBe Array("Beatles", "were", "English", "rock", "band")
+  }
+
+  "Words" should "be lowercased" in {
+    val words = Seq("The", "Beatles", "were", "an", "English", "rock", "band")
+
+    val lcWords = WordCount.toLowerCase(sc.parallelize(words)).collect()
+
+    lcWords shouldBe Array("the", "beatles", "were", "an", "english", "rock", "band")
+  }
+
+  "Empty word counts" should "be skipped" in {
+    val wordCounts = Seq(("one", 1), ("zero", 0), ("two", 2))
+
+    val filteredWordCounts = WordCount.skipEmptyWordCounts(sc.parallelize(wordCounts)).collect()
+
+    filteredWordCounts shouldBe Array(("one", 1), ("two", 2))
+  }
+
+  "Word counts" should "be sorted" in {
+    val wordCounts = Seq(("one", 1), ("zero", 0), ("two", 2))
+
+    val sortedWordCounts = WordCount.sortWordCounts(sc.parallelize(wordCounts)).collect()
+
+    sortedWordCounts shouldBe Array(("one", 1), ("two", 2), ("zero", 0))
   }
 
 }

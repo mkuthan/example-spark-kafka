@@ -39,7 +39,7 @@ object WordCount {
 
     val wordCounts = words.
       map(word => (word, 1)).
-      reduceByKeyAndWindow(sum, subtract, Seconds(windowDuration.value), Seconds(slideDuration.value))
+      reduceByKeyAndWindow(_ + _, _ - _, Seconds(windowDuration.value), Seconds(slideDuration.value))
 
     wordCounts.
       transform(skipEmptyWordCounts).
@@ -47,10 +47,6 @@ object WordCount {
   }
 
   val toLowerCase = (words: RDD[String]) => words.map(word => word.toLowerCase)
-
-  val sum = (left: Int, right: Int) => left + right
-
-  val subtract = (left: Int, right: Int) => left - right
 
   val splitLine = (lines: RDD[String]) => lines.flatMap(line => line.split("[^\\p{L}]"))
 
