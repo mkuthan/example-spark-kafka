@@ -25,8 +25,8 @@ import org.mkuthan.spark.sources.kafka.KafkaDStreamSource
 
 class WordCountJob(
                     config: JobConfig,
-                    source: DStreamSource,
-                    sink: DStreamSink[WordCount])
+                    source: DStreamSource[String, String],
+                    sink: DStreamSink[String, WordCount])
   extends SparkStreamingApplication {
 
   override def sparkConfig: SparkConfig = config.spark
@@ -56,8 +56,8 @@ object WordCountJob {
   def main(args: Array[String]): Unit = {
     val config = JobConfig()
 
-    val source = KafkaDStreamSource(config.sourceKafka)
-    val sink = KafkaDStreamSink[WordCount](config.sinkKafka)
+    val source = KafkaDStreamSource[String, String](config.sourceKafka)
+    val sink = KafkaDStreamSink[String, WordCount](config.sinkKafka)
 
     val streamingJob = new WordCountJob(config, source, sink)
     streamingJob.start()

@@ -38,7 +38,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
 
   "Sample set" should "be counted over sliding window" in {
     Given("streaming context is initialized")
-    val input = mutable.Queue[RDD[String]]()
+    val input = mutable.Queue[RDD[(String, String)]]()
 
     @volatile
     var output = Array[WordCount]()
@@ -48,12 +48,12 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
       sc.broadcast(DefaultStopWords),
       sc.broadcast(DefaultWindowDuration),
       sc.broadcast(DefaultSlideDuration)
-    ).foreachRDD(rdd => output = rdd.collect())
+    ).foreachRDD(rdd => output = rdd.collect().map(_._2))
 
     ssc.start()
 
     When("first set of words queued")
-    input += sc.makeRDD(Seq("apache"))
+    input += sc.makeRDD(Seq(("", "apache")))
 
     Then("words counted after first slide")
     clock.advance(DefaultSlideDuration.seconds)
@@ -63,7 +63,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     }
 
     When("second set of words queued")
-    input += sc.makeRDD(Seq("apache", "spark"))
+    input += sc.makeRDD(Seq(("", "apache"), ("", "spark")))
 
     Then("words counted after second slide")
     clock.advance(DefaultSlideDuration.seconds)

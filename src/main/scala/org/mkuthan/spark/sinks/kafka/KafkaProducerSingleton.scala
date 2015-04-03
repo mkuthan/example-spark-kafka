@@ -21,9 +21,9 @@ import org.apache.kafka.clients.producer.KafkaProducer
 import scala.collection.JavaConversions._
 
 // TODO: close producer gracefully (shutdown hook on spark executor?)
-class KafkaProducerSingleton(config: Map[String, Object]) extends Serializable {
+class KafkaProducerSingleton[K, V](config: Map[String, Object]) extends Serializable {
 
   @transient
-  lazy val producerHolder: KafkaProducer[String, String] = new KafkaProducer[String, String](config)
+  lazy val producerHolder: KafkaProducer[K, V] = new KafkaProducer[K, V](config)
 
 }

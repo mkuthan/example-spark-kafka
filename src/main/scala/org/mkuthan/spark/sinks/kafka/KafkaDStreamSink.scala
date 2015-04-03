@@ -21,12 +21,15 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.mkuthan.spark.sinks.DStreamSink
 
-class KafkaDStreamSink[A](config: KafkaDStreamSinkConfig) extends DStreamSink[A] {
+import scala.reflect.ClassTag
 
+class KafkaDStreamSink[K: ClassTag, V: ClassTag](config: KafkaDStreamSinkConfig) extends DStreamSink[K, V] {
+
+  // TODO: configure serializer / deserializer
   private val KeySerializer = "org.apache.kafka.common.serialization.StringSerializer"
   private val ValueSerializer = "org.apache.kafka.common.serialization.StringSerializer"
 
-  private val producer = new KafkaProducerSingleton(
+  private val producer = new KafkaProducerSingleton[K, V](
     Map(
       "bootstrap.servers" -> config.bootstrapServers,
       "acks" -> config.acks,
@@ -35,7 +38,7 @@ class KafkaDStreamSink[A](config: KafkaDStreamSinkConfig) extends DStreamSink[A]
     )
   )
 
-  override def write(ssc: StreamingContext, topic: String, stream: DStream[A]): Unit = {
+  override def write(ssc: StreamingContext, topic: String, stream: DStream[(K, V)]): Unit = {
     val topicVar = ssc.sparkContext.broadcast(topic)
     val producerVar = ssc.sparkContext.broadcast(producer)
 
@@ -45,7 +48,7 @@ class KafkaDStreamSink[A](config: KafkaDStreamSinkConfig) extends DStreamSink[A]
         val producer = producerVar.value.producerHolder
 
         // TODO: callback handling
-        producer.send(new ProducerRecord[String, String](topic, record.toString))
+        producer.send(new ProducerRecord[K, V](topic, record._1, record._2))
 
         // TODO: handle record metadata
         ()
@@ -56,5 +59,5 @@ class KafkaDStreamSink[A](config: KafkaDStreamSinkConfig) extends DStreamSink[A]
 }
 
 object KafkaDStreamSink {
-  def apply[A](config: KafkaDStreamSinkConfig): KafkaDStreamSink[A] = new KafkaDStreamSink[A](config)
+  def apply[K: ClassTag, V: ClassTag](config: KafkaDStreamSinkConfig): KafkaDStreamSink[K, V] = new KafkaDStreamSink[K, V](config)
 }
