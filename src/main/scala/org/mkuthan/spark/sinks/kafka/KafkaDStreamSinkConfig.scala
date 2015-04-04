@@ -20,7 +20,9 @@ import com.typesafe.config.Config
 
 case class KafkaDStreamSinkConfig(
                                    bootstrapServers: String,
-                                   acks: String
+                                   acks: String,
+                                   keySerializer: String,
+                                   valueSerializer: String
                                    ) extends Serializable {
 }
 
@@ -28,7 +30,9 @@ object KafkaDStreamSinkConfig {
   def apply(config: Config): KafkaDStreamSinkConfig = {
     new KafkaDStreamSinkConfig(
       config.getString("bootstrap.servers"),
-      config.getString("acks")
+      config.getString("acks"),
+      config.getString("key.serializer"),
+      config.getString("value.serializer")
     )
   }
 }

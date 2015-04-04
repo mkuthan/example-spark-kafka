@@ -24,7 +24,12 @@ import org.mkuthan.spark.sources.DStreamSource
 
 import scala.reflect.ClassTag
 
-class KafkaDStreamSource[K: ClassTag, V: ClassTag](config: KafkaDStreamSourceConfig) extends DStreamSource[K, V] {
+class KafkaDStreamSource[
+K: ClassTag,
+V: ClassTag,
+KD <: Decoder[K] : ClassTag,
+VD <: Decoder[V] : ClassTag
+](config: KafkaDStreamSourceConfig) extends DStreamSource[K, V] {
 
   override def createSource(ssc: StreamingContext, topic: String): DStream[(K, V)] = {
     val kafkaParams = Map(
@@ -35,7 +40,7 @@ class KafkaDStreamSource[K: ClassTag, V: ClassTag](config: KafkaDStreamSourceCon
     val kafkaTopics = Set(topic)
 
     KafkaUtils
-      .createDirectStream[K, V, Decoder[K], Decoder[V]](
+      .createDirectStream[K, V, KD, VD](
         ssc,
         kafkaParams,
         kafkaTopics)
@@ -44,5 +49,11 @@ class KafkaDStreamSource[K: ClassTag, V: ClassTag](config: KafkaDStreamSourceCon
 }
 
 object KafkaDStreamSource {
-  def apply[K: ClassTag, V: ClassTag](config: KafkaDStreamSourceConfig): KafkaDStreamSource[K, V] = new KafkaDStreamSource[K, V](config)
+  def apply[
+  K: ClassTag,
+  V: ClassTag,
+  KD <: Decoder[K] : ClassTag,
+  VD <: Decoder[V] : ClassTag
+  ](config: KafkaDStreamSourceConfig):
+  KafkaDStreamSource[K, V, KD, VD] = new KafkaDStreamSource[K, V, KD, VD](config)
 }

@@ -25,16 +25,12 @@ import scala.reflect.ClassTag
 
 class KafkaDStreamSink[K: ClassTag, V: ClassTag](config: KafkaDStreamSinkConfig) extends DStreamSink[K, V] {
 
-  // TODO: configure serializer / deserializer
-  private val KeySerializer = "org.apache.kafka.common.serialization.StringSerializer"
-  private val ValueSerializer = "org.apache.kafka.common.serialization.StringSerializer"
-
   private val producer = new KafkaProducerSingleton[K, V](
     Map(
       "bootstrap.servers" -> config.bootstrapServers,
       "acks" -> config.acks,
-      "key.serializer" -> KeySerializer,
-      "value.serializer" -> ValueSerializer
+      "key.serializer" -> config.keySerializer,
+      "value.serializer" -> config.valueSerializer
     )
   )
 

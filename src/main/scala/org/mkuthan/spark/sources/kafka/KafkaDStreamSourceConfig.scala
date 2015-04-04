@@ -17,10 +17,10 @@
 package org.mkuthan.spark.sources.kafka
 
 import com.typesafe.config.Config
-import kafka.serializer.Decoder
 
-case class KafkaDStreamSourceConfig(metadataBrokerList: String,
-                                    autoOffsetReset: String)
+case class KafkaDStreamSourceConfig(
+                                     metadataBrokerList: String,
+                                     autoOffsetReset: String)
   extends Serializable {
 }
 

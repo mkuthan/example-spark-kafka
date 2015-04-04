@@ -17,6 +17,7 @@
 package example
 
 import example.WordCount.WordCount
+import kafka.serializer.StringDecoder
 import org.mkuthan.spark._
 import org.mkuthan.spark.sinks.DStreamSink
 import org.mkuthan.spark.sinks.kafka.KafkaDStreamSink
@@ -56,7 +57,7 @@ object WordCountJob {
   def main(args: Array[String]): Unit = {
     val config = JobConfig()
 
-    val source = KafkaDStreamSource[String, String](config.sourceKafka)
+    val source = KafkaDStreamSource[String, String, StringDecoder, ExampleDecoder](config.sourceKafka)
     val sink = KafkaDStreamSink[String, WordCount](config.sinkKafka)
 
     val streamingJob = new WordCountJob(config, source, sink)

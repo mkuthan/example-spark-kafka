@@ -19,7 +19,7 @@ package org.mkuthan.spark.sources
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
-trait DStreamSource[K, V] {
+trait DStreamSource[K,V] {
 
   def createSource(ssc: StreamingContext, topic: String): DStream[(K, V)]
 
