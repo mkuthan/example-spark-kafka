@@ -16,22 +16,16 @@
 
 package org.mkuthan.spark.sources.kafka
 
-import kafka.serializer.{Decoder, StringDecoder}
+import kafka.serializer.DefaultDecoder
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka.KafkaUtils
+import org.mkuthan.spark.payload.Payload
 import org.mkuthan.spark.sources.DStreamSource
 
-import scala.reflect.ClassTag
+class KafkaDStreamSource(config: KafkaDStreamSourceConfig) extends DStreamSource {
 
-class KafkaDStreamSource[
-K: ClassTag,
-V: ClassTag,
-KD <: Decoder[K] : ClassTag,
-VD <: Decoder[V] : ClassTag
-](config: KafkaDStreamSourceConfig) extends DStreamSource[K, V] {
-
-  override def createSource(ssc: StreamingContext, topic: String): DStream[(K, V)] = {
+  override def createSource(ssc: StreamingContext, topic: String): DStream[Payload] = {
     val kafkaParams = Map(
       "metadata.broker.list" -> config.metadataBrokerList,
       "auto.offset.reset" -> config.autoOffsetReset
@@ -39,21 +33,16 @@ VD <: Decoder[V] : ClassTag
 
     val kafkaTopics = Set(topic)
 
-    KafkaUtils
-      .createDirectStream[K, V, KD, VD](
+    KafkaUtils.
+      createDirectStream[Array[Byte], Array[Byte], DefaultDecoder, DefaultDecoder](
         ssc,
         kafkaParams,
-        kafkaTopics)
+        kafkaTopics).
+      map(dstream => Payload(dstream._1, dstream._2))
   }
 
 }
 
 object KafkaDStreamSource {
-  def apply[
-  K: ClassTag,
-  V: ClassTag,
-  KD <: Decoder[K] : ClassTag,
-  VD <: Decoder[V] : ClassTag
-  ](config: KafkaDStreamSourceConfig):
-  KafkaDStreamSource[K, V, KD, VD] = new KafkaDStreamSource[K, V, KD, VD](config)
+  def apply(config: KafkaDStreamSourceConfig): KafkaDStreamSource = new KafkaDStreamSource(config)
 }

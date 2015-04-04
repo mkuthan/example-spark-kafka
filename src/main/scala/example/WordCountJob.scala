@@ -16,9 +16,8 @@
 
 package example
 
-import example.WordCount.WordCount
-import kafka.serializer.StringDecoder
 import org.mkuthan.spark._
+import org.mkuthan.spark.payload._
 import org.mkuthan.spark.sinks.DStreamSink
 import org.mkuthan.spark.sinks.kafka.KafkaDStreamSink
 import org.mkuthan.spark.sources.DStreamSource
@@ -26,8 +25,11 @@ import org.mkuthan.spark.sources.kafka.KafkaDStreamSource
 
 class WordCountJob(
                     config: JobConfig,
-                    source: DStreamSource[String, String],
-                    sink: DStreamSink[String, WordCount])
+                    source: DStreamSource,
+                    sink: DStreamSink,
+                    decoder: StringPayloadDecoder,
+                    encoder: StringPayloadEncoder
+                    )
   extends SparkStreamingApplication {
 
   override def sparkConfig: SparkConfig = config.spark
@@ -37,7 +39,11 @@ class WordCountJob(
   def start(): Unit = {
     withSparkStreamingContext { (sc, ssc) =>
 
-      val lines = source.createSource(ssc, config.inputTopic)
+      val encoderVar = sc.broadcast(encoder)
+      val decoderVar = sc.broadcast(decoder)
+
+      val payload = source.createSource(ssc, config.inputTopic)
+      val lines = payload.transform(p => decoderVar.value.decodeValue(p))
 
       val countedWords = WordCount.countWords(
         lines,
@@ -46,7 +52,11 @@ class WordCountJob(
         sc.broadcast(config.slideDuration)
       )
 
-      sink.write(ssc, config.outputTopic, countedWords)
+      val output = countedWords.
+        map(cw => s"${cw._1}: ${cw._2}").
+        transform(cws => encoderVar.value.encodeValue(cws))
+
+      sink.write(ssc, config.outputTopic, output)
     }
   }
 
@@ -57,10 +67,13 @@ object WordCountJob {
   def main(args: Array[String]): Unit = {
     val config = JobConfig()
 
-    val source = KafkaDStreamSource[String, String, StringDecoder, ExampleDecoder](config.sourceKafka)
-    val sink = KafkaDStreamSink[String, WordCount](config.sinkKafka)
+    val decoder = StringPayloadDecoder()
+    val encoder = StringPayloadEncoder()
 
-    val streamingJob = new WordCountJob(config, source, sink)
+    val source = KafkaDStreamSource(config.sourceKafka)
+    val sink = KafkaDStreamSink(config.sinkKafka)
+
+    val streamingJob = new WordCountJob(config, source, sink, decoder, encoder)
     streamingJob.start()
   }
 

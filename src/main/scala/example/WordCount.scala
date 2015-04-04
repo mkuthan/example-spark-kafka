@@ -26,13 +26,12 @@ object WordCount {
   type WordCount = (String, Int)
 
   def countWords(
-                  lines: DStream[(String, String)],
+                  lines: DStream[String],
                   stopWords: Broadcast[Set[String]],
                   windowDuration: Broadcast[Long],
-                  slideDuration: Broadcast[Long]): DStream[(String, WordCount)] = {
+                  slideDuration: Broadcast[Long]): DStream[WordCount] = {
 
-    val words = lines
-      .map(_._2).
+    val words = lines.
       transform(splitLine).
       transform(skipEmptyWords).
       transform(toLowerCase).
@@ -44,8 +43,7 @@ object WordCount {
 
     wordCounts.
       transform(skipEmptyWordCounts).
-      transform(sortWordCounts).
-      map(wordCount => ("", wordCount))
+      transform(sortWordCounts)
   }
 
   val toLowerCase = (words: RDD[String]) => words.map(word => word.toLowerCase)

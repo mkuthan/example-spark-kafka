@@ -14,16 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.mkuthan.spark.sinks.kafka
+package org.mkuthan.spark.payload
 
-import org.apache.kafka.clients.producer.KafkaProducer
-
-import scala.collection.JavaConversions._
-
-// TODO: close producer gracefully (shutdown hook on spark executor?)
-class KafkaProducerSingleton(config: Map[String, Object]) extends Serializable {
-
-  @transient
-  lazy val holder: KafkaProducer[Array[Byte], Array[Byte]] = new KafkaProducer(config)
-
-}
+case class Payload(key: Array[Byte], value: Array[Byte])

@@ -19,32 +19,36 @@ package org.mkuthan.spark.sinks.kafka
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
+import org.mkuthan.spark.payload.Payload
 import org.mkuthan.spark.sinks.DStreamSink
 
 import scala.reflect.ClassTag
 
-class KafkaDStreamSink[K: ClassTag, V: ClassTag](config: KafkaDStreamSinkConfig) extends DStreamSink[K, V] {
+class KafkaDStreamSink(config: KafkaDStreamSinkConfig) extends DStreamSink {
 
-  private val producer = new KafkaProducerSingleton[K, V](
+  private val KeySerializer = "org.apache.kafka.common.serialization.ByteArraySerializer"
+  private val ValueSerializer = "org.apache.kafka.common.serialization.ByteArraySerializer"
+
+  private val producer = new KafkaProducerSingleton(
     Map(
       "bootstrap.servers" -> config.bootstrapServers,
       "acks" -> config.acks,
-      "key.serializer" -> config.keySerializer,
-      "value.serializer" -> config.valueSerializer
+      "key.serializer" -> KeySerializer,
+      "value.serializer" -> ValueSerializer
     )
   )
 
-  override def write(ssc: StreamingContext, topic: String, stream: DStream[(K, V)]): Unit = {
+  override def write(ssc: StreamingContext, topic: String, stream: DStream[Payload]): Unit = {
     val topicVar = ssc.sparkContext.broadcast(topic)
     val producerVar = ssc.sparkContext.broadcast(producer)
 
     stream.foreachRDD { rdd =>
       rdd.foreach { record =>
         val topic = topicVar.value
-        val producer = producerVar.value.producerHolder
+        val producer = producerVar.value.holder
 
         // TODO: callback handling
-        producer.send(new ProducerRecord[K, V](topic, record._1, record._2))
+        producer.send(new ProducerRecord(topic, record.key, record.value))
 
         // TODO: handle record metadata
         ()
@@ -55,5 +59,5 @@ class KafkaDStreamSink[K: ClassTag, V: ClassTag](config: KafkaDStreamSinkConfig)
 }
 
 object KafkaDStreamSink {
-  def apply[K: ClassTag, V: ClassTag](config: KafkaDStreamSinkConfig): KafkaDStreamSink[K, V] = new KafkaDStreamSink[K, V](config)
+  def apply(config: KafkaDStreamSinkConfig): KafkaDStreamSink = new KafkaDStreamSink(config)
 }

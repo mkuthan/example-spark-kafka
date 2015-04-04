@@ -14,16 +14,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.mkuthan.spark.sinks.kafka
+package org.mkuthan.spark.payload
 
-import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.spark.rdd.RDD
 
-import scala.collection.JavaConversions._
+class StringPayloadDecoder extends PayloadDecoder[String, String] {
 
-// TODO: close producer gracefully (shutdown hook on spark executor?)
-class KafkaProducerSingleton(config: Map[String, Object]) extends Serializable {
+  override def decode(payload: RDD[Payload]): RDD[(String, String)] = {
+    payload.map(p => (decode(p.key), decode(p.value))
+  }
 
-  @transient
-  lazy val holder: KafkaProducer[Array[Byte], Array[Byte]] = new KafkaProducer(config)
+
+  override def decodeValue(payload: RDD[Payload]): RDD[String] = {
+    payload.map(p => decode(p.value))
+  }
+
+  private def decode(bytes: Array[Byte]): String = new String(bytes, "UTF8")
 
 }
+
+object StringPayloadDecoder {
+  def apply(): StringPayloadDecoder = new StringPayloadDecoder()
+}
+

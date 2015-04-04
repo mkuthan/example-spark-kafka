@@ -18,9 +18,10 @@ package org.mkuthan.spark.sinks
 
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
+import org.mkuthan.spark.payload.Payload
 
-trait DStreamSink[K, V] {
+trait DStreamSink {
 
-  def write(ssc: StreamingContext, topic: String, stream: DStream[(K,V)]): Unit
+  def write(ssc: StreamingContext, topic: String, stream: DStream[Payload]): Unit
 
 }

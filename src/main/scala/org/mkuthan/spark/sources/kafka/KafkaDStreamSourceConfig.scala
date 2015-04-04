@@ -21,8 +21,7 @@ import com.typesafe.config.Config
 case class KafkaDStreamSourceConfig(
                                      metadataBrokerList: String,
                                      autoOffsetReset: String)
-  extends Serializable {
-}
+  extends Serializable
 
 object KafkaDStreamSourceConfig {
   def apply(config: Config): KafkaDStreamSourceConfig = {
