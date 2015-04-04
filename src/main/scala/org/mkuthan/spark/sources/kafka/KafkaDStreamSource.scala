@@ -16,6 +16,7 @@
 
 package org.mkuthan.spark.sources.kafka
 
+import com.typesafe.config.Config
 import kafka.serializer.DefaultDecoder
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
@@ -45,4 +46,18 @@ class KafkaDStreamSource(config: KafkaDStreamSourceConfig) extends DStreamSource
 
 object KafkaDStreamSource {
   def apply(config: KafkaDStreamSourceConfig): KafkaDStreamSource = new KafkaDStreamSource(config)
+}
+
+case class KafkaDStreamSourceConfig(
+                                     metadataBrokerList: String,
+                                     autoOffsetReset: String)
+  extends Serializable
+
+object KafkaDStreamSourceConfig {
+  def apply(config: Config): KafkaDStreamSourceConfig = {
+    new KafkaDStreamSourceConfig(
+      config.getString("metadata.broker.list"),
+      config.getString("auto.offset.reset")
+    )
+  }
 }

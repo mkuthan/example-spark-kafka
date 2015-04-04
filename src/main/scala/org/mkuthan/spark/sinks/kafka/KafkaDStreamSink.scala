@@ -16,6 +16,7 @@
 
 package org.mkuthan.spark.sinks.kafka
 
+import com.typesafe.config.Config
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
@@ -61,3 +62,15 @@ class KafkaDStreamSink(config: KafkaDStreamSinkConfig) extends DStreamSink {
 object KafkaDStreamSink {
   def apply(config: KafkaDStreamSinkConfig): KafkaDStreamSink = new KafkaDStreamSink(config)
 }
+
+case class KafkaDStreamSinkConfig(bootstrapServers: String, acks: String) extends Serializable
+
+object KafkaDStreamSinkConfig {
+  def apply(config: Config): KafkaDStreamSinkConfig = {
+    new KafkaDStreamSinkConfig(
+      config.getString("bootstrap.servers"),
+      config.getString("acks")
+    )
+  }
+}
+

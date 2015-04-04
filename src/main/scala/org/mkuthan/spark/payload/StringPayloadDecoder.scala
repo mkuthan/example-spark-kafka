@@ -16,12 +16,14 @@
 
 package org.mkuthan.spark.payload
 
+import com.typesafe.config.Config
 import org.apache.spark.rdd.RDD
 
-class StringPayloadDecoder extends PayloadDecoder[String, String] {
+class StringPayloadDecoder(config: StringPayloadDecoderConfig)
+  extends PayloadDecoder[String, String] {
 
   override def decode(payload: RDD[Payload]): RDD[(String, String)] = {
-    payload.map(p => (decode(p.key), decode(p.value))
+    payload.map(p => (decode(p.key), decode(p.value)))
   }
 
 
@@ -29,11 +31,21 @@ class StringPayloadDecoder extends PayloadDecoder[String, String] {
     payload.map(p => decode(p.value))
   }
 
-  private def decode(bytes: Array[Byte]): String = new String(bytes, "UTF8")
+  private def decode(bytes: Array[Byte]): String = new String(bytes, config.encoding)
 
 }
 
 object StringPayloadDecoder {
-  def apply(): StringPayloadDecoder = new StringPayloadDecoder()
+  def apply(config: StringPayloadDecoderConfig): StringPayloadDecoder = new StringPayloadDecoder(config)
+}
+
+case class StringPayloadDecoderConfig(encoding: String) extends Serializable
+
+object StringPayloadDecoderConfig {
+  def apply(config: Config): StringPayloadDecoderConfig = {
+    new StringPayloadDecoderConfig(
+      config.getString("encoding")
+    )
+  }
 }
 
