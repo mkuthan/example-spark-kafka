@@ -20,20 +20,20 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.dstream.DStream
-import org.mkuthan.spark.payload.{StringPayloadEncoder, Payload, StringPayloadDecoder}
+import org.mkuthan.spark.payload.{Payload, PayloadDecoder, PayloadEncoder}
 
 object WordCount {
 
   type WordCount = (String, Int)
 
-  def decodePayload(payload: DStream[Payload], decoder: Broadcast[StringPayloadDecoder]): DStream[String] = {
-    payload.transform(p => decoder.value.decodeValue(p))
+  def decodePayload(payload: DStream[Payload], decoder: Broadcast[PayloadDecoder[String]]): DStream[String] = {
+    payload.transform(p => decoder.value.decode(p))
   }
 
-  def encodePayload(countedWords: DStream[(String, Int)], encoder: Broadcast[StringPayloadEncoder]): DStream[Payload] = {
+  def encodePayload(countedWords: DStream[(String, Int)], encoder: Broadcast[PayloadEncoder[String]]): DStream[Payload] = {
     countedWords.
       map(cw => cw.toString()).
-      transform(cws => encoder.value.encodeValue(cws))
+      transform(cws => encoder.value.encode(cws))
   }
 
   def countWords(

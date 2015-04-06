@@ -18,10 +18,8 @@ package org.mkuthan.spark.payload
 
 import org.apache.spark.rdd.RDD
 
-trait PayloadEncoder[K, V] extends Serializable {
+trait PayloadEncoder[V] extends Serializable {
 
-  def encode(value: RDD[(K, V)]): RDD[Payload]
-
-  def encodeValue(value: RDD[K]): RDD[Payload]
+  def encode(value: RDD[V]): RDD[Payload]
 
 }

@@ -49,7 +49,7 @@ class KafkaDStreamSink(config: KafkaDStreamSinkConfig) extends DStreamSink {
         val producer = producerVar.value.holder
 
         // TODO: callback handling
-        producer.send(new ProducerRecord(topic, record.key, record.value))
+        producer.send(new ProducerRecord(topic, record.value))
 
         // TODO: handle record metadata
         ()

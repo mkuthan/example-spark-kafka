@@ -16,4 +16,4 @@
 
 package org.mkuthan.spark.payload
 
-case class Payload(key: Array[Byte], value: Array[Byte])
+case class Payload(value: Array[Byte])

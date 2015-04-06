@@ -20,15 +20,10 @@ import com.typesafe.config.Config
 import org.apache.spark.rdd.RDD
 
 class StringPayloadEncoder(config: StringPayloadEncoderConfig)
-  extends PayloadEncoder[String, String] {
+  extends PayloadEncoder[String] {
 
-  override def encode(value: RDD[(String, String)]): RDD[Payload] = {
-    value.map(v => Payload(encode(v._1), encode(v._2)))
-  }
-
-  override def encodeValue(value: RDD[String]): RDD[Payload] = {
-    // TODO: get rid of null somehow
-    value.map(v => Payload(null, encode(v)))
+  override def encode(value: RDD[String]): RDD[Payload] = {
+    value.map(v => Payload(encode(v)))
   }
 
   private def encode(s: String): Array[Byte] = s.getBytes(config.encoding)

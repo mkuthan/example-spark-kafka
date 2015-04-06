@@ -39,7 +39,7 @@ class KafkaDStreamSource(config: KafkaDStreamSourceConfig) extends DStreamSource
         ssc,
         kafkaParams,
         kafkaTopics).
-      map(dstream => Payload(dstream._1, dstream._2))
+      map(dStream => Payload(dStream._2))
   }
 
 }

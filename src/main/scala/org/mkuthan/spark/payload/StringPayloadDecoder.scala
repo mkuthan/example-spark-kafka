@@ -20,14 +20,9 @@ import com.typesafe.config.Config
 import org.apache.spark.rdd.RDD
 
 class StringPayloadDecoder(config: StringPayloadDecoderConfig)
-  extends PayloadDecoder[String, String] {
+  extends PayloadDecoder[String] {
 
-  override def decode(payload: RDD[Payload]): RDD[(String, String)] = {
-    payload.map(p => (decode(p.key), decode(p.value)))
-  }
-
-
-  override def decodeValue(payload: RDD[Payload]): RDD[String] = {
+  override def decode(payload: RDD[Payload]): RDD[String] = {
     payload.map(p => decode(p.value))
   }
 
