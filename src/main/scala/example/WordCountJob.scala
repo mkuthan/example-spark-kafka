@@ -40,24 +40,18 @@ class WordCountJob(
   def start(): Unit = {
     withSparkStreamingContext { (sc, ssc) =>
 
-      val encoderVar = sc.broadcast(encoder)
-      val decoderVar = sc.broadcast(decoder)
+      import WordCount._
 
-      val payload = source.createSource(ssc, config.inputTopic)
-      val lines = payload.transform(p => decoderVar.value.decodeValue(p))
+      val lines = decodePayload(source.createSource(ssc, config.inputTopic), sc.broadcast(decoder))
 
-      val countedWords = WordCount.countWords(
+      val countedWords = countWords(
         lines,
         sc.broadcast(config.stopWords),
         sc.broadcast(config.windowDuration),
         sc.broadcast(config.slideDuration)
       )
 
-      val output = countedWords.
-        map(cw => cw.toString()).
-        transform(cws => encoderVar.value.encodeValue(cws))
-
-      sink.write(ssc, config.outputTopic, output)
+      sink.write(ssc, config.outputTopic, encodePayload(countedWords, sc.broadcast(encoder)))
     }
   }
 
