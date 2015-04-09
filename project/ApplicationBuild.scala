@@ -47,8 +47,7 @@ object ApplicationBuild extends Build {
     "-Yno-adapted-args",
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
-    // "-Ywarn-unused-import",
-    "-Ywarn-value-discard"
+    // "-Ywarn-unused-import"
   )
 
   val customResolvers = Seq(
@@ -67,6 +66,7 @@ object ApplicationBuild extends Build {
     "org.apache.spark" %% "spark-streaming-kafka" % Versions.spark,
 
     "com.typesafe" % "config" % "1.2.1",
+    "net.ceedubs" %% "ficus" % "1.0.1",
 
     "org.slf4j" % "slf4j-api" % "1.7.10",
     "ch.qos.logback" % "logback-classic" % "1.1.2",

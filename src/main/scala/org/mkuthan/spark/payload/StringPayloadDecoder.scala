@@ -34,13 +34,7 @@ object StringPayloadDecoder {
   def apply(config: StringPayloadDecoderConfig): StringPayloadDecoder = new StringPayloadDecoder(config)
 }
 
-case class StringPayloadDecoderConfig(encoding: String) extends Serializable
-
-object StringPayloadDecoderConfig {
-  def apply(config: Config): StringPayloadDecoderConfig = {
-    new StringPayloadDecoderConfig(
-      config.getString("encoding")
-    )
-  }
-}
+case class StringPayloadDecoderConfig(
+                                       encoding: String)
+  extends Serializable
 

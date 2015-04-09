@@ -22,15 +22,23 @@ import org.apache.spark.streaming._
 import org.apache.spark.streaming.dstream.DStream
 import org.mkuthan.spark.payload.{Payload, PayloadDecoder, PayloadEncoder}
 
+import scala.concurrent.duration.FiniteDuration
+
 object WordCount {
 
   type WordCount = (String, Int)
 
-  def decodePayload(payload: DStream[Payload], decoder: Broadcast[PayloadDecoder[String]]): DStream[String] = {
+  def decodePayload(
+                     payload: DStream[Payload],
+                     decoder: Broadcast[PayloadDecoder[String]]):
+  DStream[String] = {
     payload.transform(p => decoder.value.decode(p))
   }
 
-  def encodePayload(countedWords: DStream[(String, Int)], encoder: Broadcast[PayloadEncoder[String]]): DStream[Payload] = {
+  def encodePayload(
+                     countedWords: DStream[(String, Int)],
+                     encoder: Broadcast[PayloadEncoder[String]]):
+  DStream[Payload] = {
     countedWords.
       map(cw => cw.toString()).
       transform(cws => encoder.value.encode(cws))
@@ -39,8 +47,11 @@ object WordCount {
   def countWords(
                   lines: DStream[String],
                   stopWords: Broadcast[Set[String]],
-                  windowDuration: Broadcast[Long],
-                  slideDuration: Broadcast[Long]): DStream[WordCount] = {
+                  windowDuration: Broadcast[FiniteDuration],
+                  slideDuration: Broadcast[FiniteDuration]): DStream[WordCount] = {
+
+    import scala.language.implicitConversions
+    implicit def finiteDurationToSparkDuration(value: FiniteDuration): Duration = Seconds(value.toSeconds)
 
     val words = lines.
       transform(splitLine).
@@ -50,7 +61,7 @@ object WordCount {
 
     val wordCounts = words.
       map(word => (word, 1)).
-      reduceByKeyAndWindow(_ + _, _ - _, Seconds(windowDuration.value), Seconds(slideDuration.value))
+      reduceByKeyAndWindow(_ + _, _ - _, windowDuration.value, slideDuration.value)
 
     wordCounts.
       transform(skipEmptyWordCounts).

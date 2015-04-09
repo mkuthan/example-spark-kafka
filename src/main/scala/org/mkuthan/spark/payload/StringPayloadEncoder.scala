@@ -16,7 +16,6 @@
 
 package org.mkuthan.spark.payload
 
-import com.typesafe.config.Config
 import org.apache.spark.rdd.RDD
 
 class StringPayloadEncoder(config: StringPayloadEncoderConfig)
@@ -34,13 +33,7 @@ object StringPayloadEncoder {
   def apply(config: StringPayloadEncoderConfig): StringPayloadEncoder = new StringPayloadEncoder(config)
 }
 
-case class StringPayloadEncoderConfig(encoding: String) extends Serializable
-
-object StringPayloadEncoderConfig {
-  def apply(config: Config): StringPayloadEncoderConfig = {
-    new StringPayloadEncoderConfig(
-      config.getString("encoding")
-    )
-  }
-}
+case class StringPayloadEncoderConfig(
+                                       encoding: String)
+  extends Serializable
 

@@ -16,11 +16,10 @@
 
 package org.mkuthan.spark
 
-import java.util.concurrent.TimeUnit
-
-import com.typesafe.config.Config
 import org.apache.spark.SparkContext
 import org.apache.spark.streaming.{Seconds, StreamingContext}
+
+import scala.concurrent.duration.FiniteDuration
 
 trait SparkStreamingApplication extends SparkApplication {
 
@@ -28,7 +27,7 @@ trait SparkStreamingApplication extends SparkApplication {
 
   def withSparkStreamingContext(f: (SparkContext, StreamingContext) => Unit): Unit = {
     withSparkContext { sc =>
-      val ssc = new StreamingContext(sc, Seconds(sparkStreamingConfig.batchDuration))
+      val ssc = new StreamingContext(sc, Seconds(sparkStreamingConfig.batchDuration.toSeconds))
       ssc.checkpoint(sparkStreamingConfig.checkpoint)
 
       f(sc, ssc)
@@ -41,16 +40,6 @@ trait SparkStreamingApplication extends SparkApplication {
 }
 
 case class SparkStreamingApplicationConfig(
-                                            batchDuration: Long,
+                                            batchDuration: FiniteDuration,
                                             checkpoint: String)
-  extends Serializable {
-}
-
-object SparkStreamingApplicationConfig {
-  def apply(config: Config): SparkStreamingApplicationConfig = {
-    new SparkStreamingApplicationConfig(
-      config.getDuration("batchDuration", TimeUnit.SECONDS),
-      config.getString("checkpoint")
-    )
-  }
-}
+  extends Serializable

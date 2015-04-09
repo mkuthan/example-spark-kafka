@@ -16,28 +16,23 @@
 
 package org.mkuthan.spark.sinks.kafka
 
-import com.typesafe.config.Config
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.mkuthan.spark.payload.Payload
 import org.mkuthan.spark.sinks.DStreamSink
 
-import scala.reflect.ClassTag
-
-class KafkaDStreamSink(config: KafkaDStreamSinkConfig) extends DStreamSink {
+class KafkaDStreamSink(config: Map[String, Object]) extends DStreamSink {
 
   private val KeySerializer = "org.apache.kafka.common.serialization.ByteArraySerializer"
   private val ValueSerializer = "org.apache.kafka.common.serialization.ByteArraySerializer"
 
-  private val producer = new KafkaProducerSingleton(
-    Map(
-      "bootstrap.servers" -> config.bootstrapServers,
-      "acks" -> config.acks,
-      "key.serializer" -> KeySerializer,
-      "value.serializer" -> ValueSerializer
-    )
+  val defaultConfig = Map(
+    "key.serializer" -> KeySerializer,
+    "value.serializer" -> ValueSerializer
   )
+
+  private val producer = new KafkaProducerSingleton(defaultConfig ++ config)
 
   override def write(ssc: StreamingContext, topic: String, stream: DStream[Payload]): Unit = {
     val topicVar = ssc.sparkContext.broadcast(topic)
@@ -60,17 +55,5 @@ class KafkaDStreamSink(config: KafkaDStreamSinkConfig) extends DStreamSink {
 }
 
 object KafkaDStreamSink {
-  def apply(config: KafkaDStreamSinkConfig): KafkaDStreamSink = new KafkaDStreamSink(config)
+  def apply(config: Map[String, Object]): KafkaDStreamSink = new KafkaDStreamSink(config)
 }
-
-case class KafkaDStreamSinkConfig(bootstrapServers: String, acks: String) extends Serializable
-
-object KafkaDStreamSinkConfig {
-  def apply(config: Config): KafkaDStreamSinkConfig = {
-    new KafkaDStreamSinkConfig(
-      config.getString("bootstrap.servers"),
-      config.getString("acks")
-    )
-  }
-}
-

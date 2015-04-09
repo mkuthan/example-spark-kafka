@@ -16,7 +16,6 @@
 
 package org.mkuthan.spark
 
-import com.typesafe.config.Config
 import org.apache.spark.{SparkConf, SparkContext}
 
 trait SparkApplication {
@@ -35,18 +34,7 @@ trait SparkApplication {
 
 }
 
-case class SparkApplicationConfig(
-                        master: String,
-                        appName: String)
-  extends Serializable {
-}
-
-object SparkApplicationConfig {
-  def apply(config: Config): SparkApplicationConfig = {
-    new SparkApplicationConfig(
-      config.getString("master"),
-      config.getString("appName")
-    )
-  }
-}
+case class SparkApplicationConfig(master: String,
+                                  appName: String)
+  extends Serializable
 

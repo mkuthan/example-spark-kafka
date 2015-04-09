@@ -28,9 +28,9 @@ import scala.concurrent.duration._
 
 class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen with Matchers with Eventually {
 
-  val DefaultWindowDuration = 4L
-  val DefaultSlideDuration = 2L
-  val DefaultStopWords = Set[String]()
+  val DEFAULT_WINDOW_DURATION = 4.seconds
+  val DEFAULT_SLIDE_DURATION = 2.seconds
+  val DEFAULT_STOP_WORDS = Set[String]()
 
   // default timeout for eventually trait
   implicit override val patienceConfig =
@@ -45,9 +45,9 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
 
     WordCount.countWords(
       ssc.queueStream(input),
-      sc.broadcast(DefaultStopWords),
-      sc.broadcast(DefaultWindowDuration),
-      sc.broadcast(DefaultSlideDuration)
+      sc.broadcast(DEFAULT_STOP_WORDS),
+      sc.broadcast(DEFAULT_WINDOW_DURATION),
+      sc.broadcast(DEFAULT_SLIDE_DURATION)
     ).foreachRDD(rdd => output = rdd.collect())
 
     ssc.start()
@@ -56,7 +56,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     input += sc.makeRDD(Seq("apache"))
 
     Then("words counted after first slide")
-    clock.advance(DefaultSlideDuration.seconds)
+    clock.advance(DEFAULT_SLIDE_DURATION)
     eventually {
       output should contain only (
         ("apache", 1))
@@ -66,7 +66,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     input += sc.makeRDD(Seq("apache", "spark"))
 
     Then("words counted after second slide")
-    clock.advance(DefaultSlideDuration.seconds)
+    clock.advance(DEFAULT_SLIDE_DURATION)
     eventually {
       output should contain only(
         ("apache", 2),
@@ -76,7 +76,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     When("nothing more queued")
 
     Then("word counted after third slide")
-    clock.advance(DefaultSlideDuration.seconds)
+    clock.advance(DEFAULT_SLIDE_DURATION)
     eventually {
       output should contain only(
         ("apache", 1),
@@ -86,7 +86,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     When("nothing more queued")
 
     Then("word counted after fourth slide")
-    clock.advance(DefaultSlideDuration.seconds)
+    clock.advance(DEFAULT_SLIDE_DURATION)
     eventually {
       output shouldBe empty
     }

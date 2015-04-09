@@ -16,17 +16,17 @@
 
 package example
 
-import java.util.concurrent.TimeUnit
-
 import org.mkuthan.spark._
 import org.mkuthan.spark.payload._
 import org.mkuthan.spark.sinks.DStreamSink
-import org.mkuthan.spark.sinks.kafka.{KafkaDStreamSinkConfig, KafkaDStreamSink}
+import org.mkuthan.spark.sinks.kafka.KafkaDStreamSink
 import org.mkuthan.spark.sources.DStreamSource
-import org.mkuthan.spark.sources.kafka.{KafkaDStreamSourceConfig, KafkaDStreamSource}
+import org.mkuthan.spark.sources.kafka.KafkaDStreamSource
+
+import scala.concurrent.duration.FiniteDuration
 
 class WordCountJob(
-                    config: JobConfig,
+                    config: WordCountJobConfig,
                     source: DStreamSource,
                     sink: DStreamSink,
                     decoder: StringPayloadDecoder,
@@ -60,7 +60,7 @@ class WordCountJob(
 object WordCountJob {
 
   def main(args: Array[String]): Unit = {
-    val config = JobConfig()
+    val config = WordCountJobConfig()
 
     val decoder = StringPayloadDecoder(config.decoderString)
     val encoder = StringPayloadEncoder(config.encoderString)
@@ -74,44 +74,44 @@ object WordCountJob {
 
 }
 
-case class JobConfig(
-                      inputTopic: String,
-                      outputTopic: String,
-                      stopWords: Set[String],
-                      windowDuration: Long,
-                      slideDuration: Long,
-                      spark: SparkApplicationConfig,
-                      sparkStreaming: SparkStreamingApplicationConfig,
-                      encoderString: StringPayloadEncoderConfig,
-                      decoderString: StringPayloadDecoderConfig,
-                      sourceKafka: KafkaDStreamSourceConfig,
-                      sinkKafka: KafkaDStreamSinkConfig)
-  extends Serializable {
-}
+case class WordCountJobConfig(
+                               inputTopic: String,
+                               outputTopic: String,
+                               stopWords: Set[String],
+                               windowDuration: FiniteDuration,
+                               slideDuration: FiniteDuration,
+                               spark: SparkApplicationConfig,
+                               sparkStreaming: SparkStreamingApplicationConfig,
+                               encoderString: StringPayloadEncoderConfig,
+                               decoderString: StringPayloadDecoderConfig,
+                               sourceKafka: Map[String, Object],
+                               sinkKafka: Map[String, Object])
+  extends Serializable
 
-object JobConfig {
+object WordCountJobConfig {
 
   import com.typesafe.config.{Config, ConfigFactory}
-  import scala.collection.JavaConversions._
+  import net.ceedubs.ficus.Ficus._
+  import net.ceedubs.ficus.readers.ArbitraryTypeReader.arbitraryTypeValueReader
 
-  def apply(): JobConfig = apply(ConfigFactory.load())
+  def apply(): WordCountJobConfig = apply(ConfigFactory.load())
 
-  def apply(applicationConfig: Config): JobConfig = {
+  def apply(applicationConfig: Config): WordCountJobConfig = {
 
-    val config = applicationConfig.getConfig("example")
+    val config = applicationConfig.getConfig("wordCountJob")
 
-    new JobConfig(
-      config.getString("input.topic"),
-      config.getString("output.topic"),
-      config.getStringList("stopWords").toSet,
-      config.getDuration("windowDuration", TimeUnit.SECONDS),
-      config.getDuration("slideDuration", TimeUnit.SECONDS),
-      SparkApplicationConfig(config.getConfig("spark")),
-      SparkStreamingApplicationConfig(config.getConfig("sparkStreaming")),
-      StringPayloadEncoderConfig(config.getConfig("encoders.string")),
-      StringPayloadDecoderConfig(config.getConfig("decoders.string")),
-      KafkaDStreamSourceConfig(config.getConfig("sources.kafka")),
-      KafkaDStreamSinkConfig(config.getConfig("sinks.kafka"))
+    new WordCountJobConfig(
+      config.as[String]("input.topic"),
+      config.as[String]("output.topic"),
+      config.as[Set[String]]("stopWords"),
+      config.as[FiniteDuration]("windowDuration"),
+      config.as[FiniteDuration]("slideDuration"),
+      config.as[SparkApplicationConfig]("spark"),
+      config.as[SparkStreamingApplicationConfig]("sparkStreaming"),
+      config.as[StringPayloadEncoderConfig]("encoders.string"),
+      config.as[StringPayloadDecoderConfig]("decoders.string"),
+      config.as[Map[String, Object]]("sources.kafka"),
+      config.as[Map[String, Object]]("sinks.kafka")
     )
   }
 
