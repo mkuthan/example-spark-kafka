@@ -29,7 +29,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
 
   val DEFAULT_WINDOW_DURATION = 4.seconds
   val DEFAULT_SLIDE_DURATION = 2.seconds
-  val DEFAULT_STOP_WORDS = Set[String]()
+  val DEFAULT_STOP_WORDS = Set.empty[String]
 
   // default timeout for eventually trait
   implicit override val patienceConfig =
@@ -38,16 +38,14 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
   "Sample set" should "be counted over sliding window" in {
     Given("streaming context is initialized")
     val input = mutable.Queue[RDD[String]]()
-
-    @volatile
-    var output = Array[WordCount]()
+    val output = mutable.ArrayBuffer.empty[Array[WordCount]]
 
     countWords(
       ssc.queueStream(input),
       sc.broadcast(DEFAULT_STOP_WORDS),
       sc.broadcast(DEFAULT_WINDOW_DURATION),
       sc.broadcast(DEFAULT_SLIDE_DURATION)
-    ).foreachRDD(rdd => output = rdd.collect())
+    ).foreachRDD(rdd => output += rdd.collect())
 
     ssc.start()
 
@@ -57,7 +55,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     Then("words counted after first slide")
     clock.advance(DEFAULT_SLIDE_DURATION)
     eventually {
-      output should contain only (
+      output.last should contain only (
         ("apache", 1))
     }
 
@@ -67,7 +65,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     Then("words counted after second slide")
     clock.advance(DEFAULT_SLIDE_DURATION)
     eventually {
-      output should contain only(
+      output.last should contain only(
         ("apache", 2),
         ("spark", 1))
     }
@@ -77,7 +75,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     Then("word counted after third slide")
     clock.advance(DEFAULT_SLIDE_DURATION)
     eventually {
-      output should contain only(
+      output.last should contain only(
         ("apache", 1),
         ("spark", 1))
     }
@@ -87,7 +85,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     Then("word counted after fourth slide")
     clock.advance(DEFAULT_SLIDE_DURATION)
     eventually {
-      output shouldBe empty
+      output.last shouldBe empty
     }
 
     //ssc.awaitTermination()

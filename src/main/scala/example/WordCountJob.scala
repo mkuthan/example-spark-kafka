@@ -36,9 +36,9 @@ class WordCountJob(
   with WordCountDecoder
   with WordCountEncoder {
 
-  override def sparkConfig: SparkApplicationConfig = config.spark
+  override def sparkConfig = config.spark
 
-  override def sparkStreamingConfig: SparkStreamingApplicationConfig = config.sparkStreaming
+  override def sparkStreamingConfig = config.sparkStreaming
 
   def start(): Unit = {
     withSparkStreamingContext { (sc, ssc) =>
