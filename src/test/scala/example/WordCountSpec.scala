@@ -16,7 +16,6 @@
 
 package example
 
-import example.WordCount.WordCount
 import org.apache.spark.rdd.RDD
 import org.mkuthan.spark.SparkStreamingSpec
 import org.scalatest._
@@ -26,7 +25,7 @@ import org.scalatest.time.{Millis, Span}
 import scala.collection.mutable
 import scala.concurrent.duration._
 
-class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen with Matchers with Eventually {
+class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen with Matchers with Eventually with WordCount {
 
   val DEFAULT_WINDOW_DURATION = 4.seconds
   val DEFAULT_SLIDE_DURATION = 2.seconds
@@ -43,7 +42,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     @volatile
     var output = Array[WordCount]()
 
-    WordCount.countWords(
+    countWords(
       ssc.queueStream(input),
       sc.broadcast(DEFAULT_STOP_WORDS),
       sc.broadcast(DEFAULT_WINDOW_DURATION),
@@ -97,7 +96,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
   "Line" should "be split into words" in {
     val line = Seq("To be or not to be, that is the question")
 
-    val words = WordCount.splitLine(sc.parallelize(line)).collect()
+    val words = splitLine(sc.parallelize(line)).collect()
 
     words shouldBe Array("To", "be", "or", "not", "to", "be", "", "that", "is", "the", "question")
   }
@@ -105,7 +104,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
   "Empty words" should "be skipped" in {
     val words = Seq("before", "", "after")
 
-    val filteredWords = WordCount.skipEmptyWords(sc.parallelize(words)).collect()
+    val filteredWords = skipEmptyWords(sc.parallelize(words)).collect()
 
     filteredWords shouldBe Array("before", "after")
   }
@@ -114,7 +113,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     val line = Seq("The", "Beatles", "were", "an", "English", "rock", "band")
     val stopWords = Set("The", "an")
 
-    val filteredWords = WordCount.skipStopWords(sc.broadcast(stopWords))(sc.parallelize(line)).collect()
+    val filteredWords = skipStopWords(sc.broadcast(stopWords))(sc.parallelize(line)).collect()
 
     filteredWords shouldBe Array("Beatles", "were", "English", "rock", "band")
   }
@@ -122,7 +121,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
   "Words" should "be lowercased" in {
     val words = Seq("The", "Beatles", "were", "an", "English", "rock", "band")
 
-    val lcWords = WordCount.toLowerCase(sc.parallelize(words)).collect()
+    val lcWords = toLowerCase(sc.parallelize(words)).collect()
 
     lcWords shouldBe Array("the", "beatles", "were", "an", "english", "rock", "band")
   }
@@ -130,7 +129,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
   "Empty word counts" should "be skipped" in {
     val wordCounts = Seq(("one", 1), ("zero", 0), ("two", 2))
 
-    val filteredWordCounts = WordCount.skipEmptyWordCounts(sc.parallelize(wordCounts)).collect()
+    val filteredWordCounts = skipEmptyWordCounts(sc.parallelize(wordCounts)).collect()
 
     filteredWordCounts shouldBe Array(("one", 1), ("two", 2))
   }
@@ -138,7 +137,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
   "Word counts" should "be sorted" in {
     val wordCounts = Seq(("one", 1), ("zero", 0), ("two", 2))
 
-    val sortedWordCounts = WordCount.sortWordCounts(sc.parallelize(wordCounts)).collect()
+    val sortedWordCounts = sortWordCounts(sc.parallelize(wordCounts)).collect()
 
     sortedWordCounts shouldBe Array(("one", 1), ("two", 2), ("zero", 0))
   }

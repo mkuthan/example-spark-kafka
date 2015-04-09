@@ -31,7 +31,10 @@ class WordCountJob(
                     sink: DStreamSink,
                     decoder: StringPayloadDecoder,
                     encoder: StringPayloadEncoder)
-  extends SparkStreamingApplication {
+  extends SparkStreamingApplication
+  with WordCount
+  with WordCountDecoder
+  with WordCountEncoder {
 
   override def sparkConfig: SparkApplicationConfig = config.spark
 
@@ -39,8 +42,6 @@ class WordCountJob(
 
   def start(): Unit = {
     withSparkStreamingContext { (sc, ssc) =>
-
-      import WordCount._
 
       val lines = decodePayload(source.createSource(ssc, config.inputTopic), sc.broadcast(decoder))
 

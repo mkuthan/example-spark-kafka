@@ -18,31 +18,15 @@ package example
 
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-import org.apache.spark.streaming._
+import org.apache.spark.streaming.Duration
 import org.apache.spark.streaming.dstream.DStream
 import org.mkuthan.spark.payload.{Payload, PayloadDecoder, PayloadEncoder}
 
 import scala.concurrent.duration.FiniteDuration
 
-object WordCount {
+trait WordCount {
 
   type WordCount = (String, Int)
-
-  def decodePayload(
-                     payload: DStream[Payload],
-                     decoder: Broadcast[PayloadDecoder[String]]):
-  DStream[String] = {
-    payload.transform(p => decoder.value.decode(p))
-  }
-
-  def encodePayload(
-                     countedWords: DStream[(String, Int)],
-                     encoder: Broadcast[PayloadEncoder[String]]):
-  DStream[Payload] = {
-    countedWords.
-      map(cw => cw.toString()).
-      transform(cws => encoder.value.encode(cws))
-  }
 
   def countWords(
                   lines: DStream[String],
@@ -51,7 +35,7 @@ object WordCount {
                   slideDuration: Broadcast[FiniteDuration]): DStream[WordCount] = {
 
     import scala.language.implicitConversions
-    implicit def finiteDurationToSparkDuration(value: FiniteDuration): Duration = Seconds(value.toSeconds)
+    implicit def finiteDurationToSparkDuration(value: FiniteDuration): Duration = new Duration(value.toMillis)
 
     val words = lines.
       transform(splitLine).
@@ -81,5 +65,25 @@ object WordCount {
 
   val sortWordCounts = (wordCounts: RDD[WordCount]) => wordCounts.sortByKey()
 
+}
+
+trait WordCountDecoder {
+  def decodePayload(
+                     payload: DStream[Payload],
+                     decoder: Broadcast[PayloadDecoder[String]]):
+  DStream[String] = {
+    payload.transform(p => decoder.value.decode(p))
+  }
+}
+
+trait WordCountEncoder {
+  def encodePayload(
+                     countedWords: DStream[(String, Int)],
+                     encoder: Broadcast[PayloadEncoder[String]]):
+  DStream[Payload] = {
+    countedWords.
+      map(cw => cw.toString()).
+      transform(cws => encoder.value.encode(cws))
+  }
 }
 
