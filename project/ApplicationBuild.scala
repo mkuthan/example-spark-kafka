@@ -19,8 +19,6 @@ import sbt.Keys._
 
 object ApplicationBuild extends Build {
 
-  import org.scalastyle.sbt.ScalastylePlugin.{Settings => scalastyleSettings}
-
   object Versions {
     val kafka = "0.8.2.1"
     val spark = "1.3.0"
@@ -83,7 +81,6 @@ object ApplicationBuild extends Build {
     settings(scalacOptions ++= customScalacOptions).
     settings(resolvers ++= customResolvers).
     settings(libraryDependencies ++= customLibraryDependencies).
-    settings(excludeDependencies ++= customExcludeDependencies).
-    settings(scalastyleSettings)
+    settings(excludeDependencies ++= customExcludeDependencies)
 }
 
