@@ -5,9 +5,8 @@
     </encoder>
   </appender>
 
-  <logger name="org.apache.spark" level="WARN"/>
-
   <!--
+  <logger name="kafka" level="INFO"/>
   <logger name="org.apache.spark.SparkContext" level="INFO"/>
   <logger name="org.apache.spark.streaming.StreamingContext" level="INFO"/>
 
