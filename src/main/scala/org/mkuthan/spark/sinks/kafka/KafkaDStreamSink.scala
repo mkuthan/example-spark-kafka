@@ -16,7 +16,7 @@
 
 package org.mkuthan.spark.sinks.kafka
 
-import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.clients.producer.{RecordMetadata, Callback, ProducerRecord}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.mkuthan.spark.payload.Payload
@@ -38,16 +38,28 @@ class KafkaDStreamSink(config: Map[String, String]) extends DStreamSink {
     val topicVar = ssc.sparkContext.broadcast(topic)
     val producerVar = ssc.sparkContext.broadcast(producer)
 
+    val successCounter = ssc.sparkContext.accumulator(0)
+    val failureCounter = ssc.sparkContext.accumulator(0)
+
+    val callbackVar = ssc.sparkContext.broadcast(new Callback {
+      override def onCompletion(recordMetadata: RecordMetadata, ex: Exception): Unit = Option(ex) match {
+        case Some(ex) =>
+          failureCounter += 1
+        case _ =>
+          successCounter += 1
+      }
+    })
+
     stream.foreachRDD { rdd =>
       rdd.foreach { record =>
         val topic = topicVar.value
         val producer = producerVar.value.holder
+        val callback = callbackVar.value
 
-        // TODO: callback handling
-        producer.send(new ProducerRecord(topic, record.value))
-
-        // TODO: handle record metadata
-        ()
+        producer.send(
+          new ProducerRecord(topic, record.value),
+          callback
+        )
       }
     }
   }

@@ -75,7 +75,7 @@ object ApplicationBuild extends Build {
   )
 
   val customExcludeDependencies = Seq(
-    "org.slf4j", "slf4j-log4j12"
+    "org.slf4j" % "slf4j-log4j12"
   )
 
   lazy val main = Project(projectName, base = file(".")).
