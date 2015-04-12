@@ -36,9 +36,9 @@ class WordCountJob(
   with WordCountDecoder
   with WordCountEncoder {
 
-  override def sparkConfig = config.spark
+  override def sparkConfig: SparkApplicationConfig = config.spark
 
-  override def sparkStreamingConfig = config.sparkStreaming
+  override def sparkStreamingConfig: SparkStreamingApplicationConfig = config.sparkStreaming
 
   def start(): Unit = {
     withSparkStreamingContext { (sc, ssc) =>
@@ -85,8 +85,8 @@ case class WordCountJobConfig(
                                sparkStreaming: SparkStreamingApplicationConfig,
                                encoderString: StringPayloadEncoderConfig,
                                decoderString: StringPayloadDecoderConfig,
-                               sourceKafka: Map[String, Object],
-                               sinkKafka: Map[String, Object])
+                               sourceKafka: Map[String, String],
+                               sinkKafka: Map[String, String])
   extends Serializable
 
 object WordCountJobConfig {
@@ -111,8 +111,8 @@ object WordCountJobConfig {
       config.as[SparkStreamingApplicationConfig]("sparkStreaming"),
       config.as[StringPayloadEncoderConfig]("encoders.string"),
       config.as[StringPayloadDecoderConfig]("decoders.string"),
-      config.as[Map[String, Object]]("sources.kafka"),
-      config.as[Map[String, Object]]("sinks.kafka")
+      config.as[Map[String, String]]("sources.kafka"),
+      config.as[Map[String, String]]("sinks.kafka")
     )
   }
 

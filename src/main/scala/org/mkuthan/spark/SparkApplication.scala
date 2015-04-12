@@ -20,12 +20,16 @@ import org.apache.spark.{SparkConf, SparkContext}
 
 trait SparkApplication {
 
+  private val SERIALIZER = "org.apache.spark.serializer.KryoSerializer"
+
   def sparkConfig: SparkApplicationConfig
 
   def withSparkContext(f: SparkContext => Unit): Unit = {
     val sparkConf = new SparkConf()
       .setMaster(sparkConfig.master)
       .setAppName(sparkConfig.appName)
+      .set("spark.serializer", SERIALIZER)
+    //.registerKryoClasses(sparkConfig.kryoClasses.map(Class.forName(_)))
 
     val sc = new SparkContext(sparkConf)
 
@@ -35,6 +39,7 @@ trait SparkApplication {
 }
 
 case class SparkApplicationConfig(master: String,
-                                  appName: String)
+                                  appName: String,
+                                  kryoClasses: Array[String])
   extends Serializable
 

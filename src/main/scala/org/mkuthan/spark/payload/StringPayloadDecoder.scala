@@ -16,7 +16,6 @@
 
 package org.mkuthan.spark.payload
 
-import com.typesafe.config.Config
 import org.apache.spark.rdd.RDD
 
 class StringPayloadDecoder(config: StringPayloadDecoderConfig)

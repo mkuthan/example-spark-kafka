@@ -23,10 +23,10 @@ import org.apache.spark.streaming.kafka.KafkaUtils
 import org.mkuthan.spark.payload.Payload
 import org.mkuthan.spark.sources.DStreamSource
 
-class KafkaDStreamSource(config: Map[String, Object]) extends DStreamSource {
+class KafkaDStreamSource(config: Map[String, String]) extends DStreamSource {
 
   override def createSource(ssc: StreamingContext, topic: String): DStream[Payload] = {
-    val kafkaParams = config.mapValues(_.toString())
+    val kafkaParams = config
     val kafkaTopics = Set(topic)
 
     KafkaUtils.
@@ -40,5 +40,5 @@ class KafkaDStreamSource(config: Map[String, Object]) extends DStreamSource {
 }
 
 object KafkaDStreamSource {
-  def apply(config: Map[String, Object]): KafkaDStreamSource = new KafkaDStreamSource(config)
+  def apply(config: Map[String, String]): KafkaDStreamSource = new KafkaDStreamSource(config)
 }

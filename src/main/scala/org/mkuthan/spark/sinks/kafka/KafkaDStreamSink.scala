@@ -22,14 +22,14 @@ import org.apache.spark.streaming.dstream.DStream
 import org.mkuthan.spark.payload.Payload
 import org.mkuthan.spark.sinks.DStreamSink
 
-class KafkaDStreamSink(config: Map[String, Object]) extends DStreamSink {
+class KafkaDStreamSink(config: Map[String, String]) extends DStreamSink {
 
-  private val KeySerializer = "org.apache.kafka.common.serialization.ByteArraySerializer"
-  private val ValueSerializer = "org.apache.kafka.common.serialization.ByteArraySerializer"
+  private val KEY_SERIALIZER = "org.apache.kafka.common.serialization.ByteArraySerializer"
+  private val VALUE_SERIALIZER = "org.apache.kafka.common.serialization.ByteArraySerializer"
 
   val defaultConfig = Map(
-    "key.serializer" -> KeySerializer,
-    "value.serializer" -> ValueSerializer
+    "key.serializer" -> KEY_SERIALIZER,
+    "value.serializer" -> VALUE_SERIALIZER
   )
 
   private val producer = new KafkaProducerSingleton(defaultConfig ++ config)
@@ -55,5 +55,5 @@ class KafkaDStreamSink(config: Map[String, Object]) extends DStreamSink {
 }
 
 object KafkaDStreamSink {
-  def apply(config: Map[String, Object]): KafkaDStreamSink = new KafkaDStreamSink(config)
+  def apply(config: Map[String, String]): KafkaDStreamSink = new KafkaDStreamSink(config)
 }
