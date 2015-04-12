@@ -31,7 +31,7 @@ object ApplicationBuild extends Build {
   val common = Seq(
     version := "1.0",
     organization := "http://mkuthan.github.io/",
-    scalaVersion := "2.10.4",
+    scalaVersion := "2.10.5",
     parallelExecution in Test := false,
     fork in Test := true
   )
@@ -72,15 +72,18 @@ object ApplicationBuild extends Build {
     "ch.qos.logback" % "logback-classic" % "1.1.2",
 
     "org.scalatest" %% "scalatest" % "2.2.4" % "test"
-  ).map(_.exclude(
+  )
+
+  val customExcludeDependencies = Seq(
     "org.slf4j", "slf4j-log4j12"
-  ))
+  )
 
   lazy val main = Project(projectName, base = file(".")).
-    settings(common: _*).
+    settings(common).
     settings(scalacOptions ++= customScalacOptions).
     settings(resolvers ++= customResolvers).
     settings(libraryDependencies ++= customLibraryDependencies).
-    settings(scalastyleSettings: _*)
+    settings(excludeDependencies ++= customExcludeDependencies).
+    settings(scalastyleSettings)
 }
 
