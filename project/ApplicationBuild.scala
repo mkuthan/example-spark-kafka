@@ -76,11 +76,11 @@ object ApplicationBuild extends Build {
     "org.slf4j" % "slf4j-log4j12"
   )
 
-  lazy val main = Project(projectName, base = file(".")).
-    settings(common).
-    settings(scalacOptions ++= customScalacOptions).
-    settings(resolvers ++= customResolvers).
-    settings(libraryDependencies ++= customLibraryDependencies).
-    settings(excludeDependencies ++= customExcludeDependencies)
+  lazy val main = Project(projectName, base = file("."))
+    .settings(common)
+    .settings(scalacOptions ++= customScalacOptions)
+    .settings(resolvers ++= customResolvers)
+    .settings(libraryDependencies ++= customLibraryDependencies)
+    .settings(excludeDependencies ++= customExcludeDependencies)
 }
 

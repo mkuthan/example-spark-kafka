@@ -38,8 +38,8 @@ class KafkaDStreamSink(config: Map[String, String]) extends DStreamSink {
     val topicVar = ssc.sparkContext.broadcast(topic)
     val producerVar = ssc.sparkContext.broadcast(producer)
 
-    val successCounter = ssc.sparkContext.accumulator(0)
-    val failureCounter = ssc.sparkContext.accumulator(0)
+    val successCounter = ssc.sparkContext.accumulator(0L, "success counter")
+    val failureCounter = ssc.sparkContext.accumulator(0L, "failure counter")
 
     val callbackVar = ssc.sparkContext.broadcast(new Callback {
       override def onCompletion(recordMetadata: RecordMetadata, ex: Exception): Unit = Option(ex) match {
