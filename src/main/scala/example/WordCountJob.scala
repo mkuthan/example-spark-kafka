@@ -24,7 +24,7 @@ class WordCountJob(
                     config: WordCountJobConfig,
                     source: KafkaDStreamSource,
                     sink: KafkaDStreamSink,
-                    codec: StringKafkaPayload)
+                    codec: StringKafkaPayloadCodec)
   extends SparkStreamingApplication with WordCount {
 
   override def sparkConfig: SparkApplicationConfig = config.spark
@@ -67,7 +67,7 @@ object WordCountJob {
     val source = KafkaDStreamSource(config.sourceKafka)
     val sink = KafkaDStreamSink(config.sinkKafka)
 
-    val codec = StringKafkaPayload(config.stringCodec)
+    val codec = StringKafkaPayloadCodec(config.stringCodec)
 
     val streamingJob = new WordCountJob(config, source, sink, codec)
     streamingJob.start()
@@ -83,7 +83,7 @@ case class WordCountJobConfig(
                                slideDuration: FiniteDuration,
                                spark: SparkApplicationConfig,
                                sparkStreaming: SparkStreamingApplicationConfig,
-                               stringCodec: StringKafkaPayloadConfig,
+                               stringCodec: StringKafkaPayloadCodecConfig,
                                sourceKafka: Map[String, String],
                                sinkKafka: Map[String, String])
   extends Serializable
@@ -111,9 +111,9 @@ object WordCountJobConfig {
       config.as[FiniteDuration]("slideDuration"),
       config.as[SparkApplicationConfig]("spark"),
       config.as[SparkStreamingApplicationConfig]("sparkStreaming"),
-      config.as[StringKafkaPayloadConfig]("codecs.string"),
-      config.as[Map[String, String]]("sources.kafka"),
-      config.as[Map[String, String]]("sinks.kafka")
+      config.as[StringKafkaPayloadCodecConfig]("stringCodec"),
+      config.as[Map[String, String]]("kafkaSource"),
+      config.as[Map[String, String]]("kafkaSink")
     )
   }
 

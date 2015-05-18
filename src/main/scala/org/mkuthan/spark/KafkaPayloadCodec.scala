@@ -20,29 +20,10 @@ import org.apache.spark.streaming.StreamingContext
 
 import scala.util.Try
 
-class StringKafkaPayload(config: StringKafkaPayloadConfig) extends KafkaPayloadCodec[String] {
+trait KafkaPayloadCodec[V] extends Serializable {
 
-  override def decoder(ssc: StreamingContext): KafkaPayload => Try[String] = {
-    payload => decode(payload.value)
-  }
+  def decoder(ssc: StreamingContext): KafkaPayload => Try[V]
 
-  override def encoder(ssc: StreamingContext): String => Try[KafkaPayload] = {
-    value => Try {
-      KafkaPayload(encode(value))
-    }
-  }
-
-  private def decode(bytes: Array[Byte]): Try[String] = Try {
-    new String(bytes, config.encoding)
-  }
-
-  private def encode(s: String): Array[Byte] = s.getBytes(config.encoding)
+  def encoder(ssc: StreamingContext): V => Try[KafkaPayload]
 
 }
-
-object StringKafkaPayload {
-  def apply(config: StringKafkaPayloadConfig): StringKafkaPayload = new StringKafkaPayload(config)
-}
-
-case class StringKafkaPayloadConfig(encoding: String) extends Serializable
-
