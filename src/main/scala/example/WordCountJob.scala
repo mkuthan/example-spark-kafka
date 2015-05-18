@@ -17,24 +17,15 @@
 package example
 
 import org.mkuthan.spark._
-import org.mkuthan.spark.payload._
-import org.mkuthan.spark.sinks.DStreamSink
-import org.mkuthan.spark.sinks.kafka.KafkaDStreamSink
-import org.mkuthan.spark.sources.DStreamSource
-import org.mkuthan.spark.sources.kafka.KafkaDStreamSource
 
 import scala.concurrent.duration.FiniteDuration
 
 class WordCountJob(
                     config: WordCountJobConfig,
-                    source: DStreamSource,
-                    sink: DStreamSink,
-                    decoder: StringPayloadDecoder,
-                    encoder: StringPayloadEncoder)
-  extends SparkStreamingApplication
-  with WordCount
-  with WordCountDecoder
-  with WordCountEncoder {
+                    source: KafkaDStreamSource,
+                    sink: KafkaDStreamSink,
+                    codec: StringKafkaPayload)
+  extends SparkStreamingApplication with WordCount {
 
   override def sparkConfig: SparkApplicationConfig = config.spark
 
@@ -43,16 +34,26 @@ class WordCountJob(
   def start(): Unit = {
     withSparkStreamingContext { (sc, ssc) =>
 
-      val lines = decodePayload(source.createSource(ssc, config.inputTopic), sc.broadcast(decoder))
+      val input = source.createSource(ssc, config.inputTopic)
+
+      val lines = input
+        .map(codec.decoder(ssc))
+        .flatMap(_.toOption)
 
       val countedWords = countWords(
+        ssc,
         lines,
-        sc.broadcast(config.stopWords),
-        sc.broadcast(config.windowDuration),
-        sc.broadcast(config.slideDuration)
+        config.stopWords,
+        config.windowDuration,
+        config.slideDuration
       )
 
-      sink.write(ssc, config.outputTopic, encodePayload(countedWords, sc.broadcast(encoder)))
+      val output = countedWords
+        .map(cw => cw.toString())
+        .map(codec.encoder(ssc))
+        .flatMap(_.toOption)
+
+      sink.write(ssc, config.outputTopic, output)
     }
   }
 
@@ -63,13 +64,12 @@ object WordCountJob {
   def main(args: Array[String]): Unit = {
     val config = WordCountJobConfig()
 
-    val decoder = StringPayloadDecoder(config.decoderString)
-    val encoder = StringPayloadEncoder(config.encoderString)
-
     val source = KafkaDStreamSource(config.sourceKafka)
     val sink = KafkaDStreamSink(config.sinkKafka)
 
-    val streamingJob = new WordCountJob(config, source, sink, decoder, encoder)
+    val codec = StringKafkaPayload(config.stringCodec)
+
+    val streamingJob = new WordCountJob(config, source, sink, codec)
     streamingJob.start()
   }
 
@@ -83,8 +83,7 @@ case class WordCountJobConfig(
                                slideDuration: FiniteDuration,
                                spark: SparkApplicationConfig,
                                sparkStreaming: SparkStreamingApplicationConfig,
-                               encoderString: StringPayloadEncoderConfig,
-                               decoderString: StringPayloadDecoderConfig,
+                               stringCodec: StringKafkaPayloadConfig,
                                sourceKafka: Map[String, String],
                                sinkKafka: Map[String, String])
   extends Serializable
@@ -112,8 +111,7 @@ object WordCountJobConfig {
       config.as[FiniteDuration]("slideDuration"),
       config.as[SparkApplicationConfig]("spark"),
       config.as[SparkStreamingApplicationConfig]("sparkStreaming"),
-      config.as[StringPayloadEncoderConfig]("encoders.string"),
-      config.as[StringPayloadDecoderConfig]("decoders.string"),
+      config.as[StringKafkaPayloadConfig]("codecs.string"),
       config.as[Map[String, String]]("sources.kafka"),
       config.as[Map[String, String]]("sinks.kafka")
     )

@@ -14,26 +14,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.mkuthan.spark.payload
+package org.mkuthan.spark
 
-import org.apache.spark.rdd.RDD
+import org.apache.spark.streaming.StreamingContext
 
-class StringPayloadEncoder(config: StringPayloadEncoderConfig)
-  extends PayloadEncoder[String] {
+import scala.util.Try
 
-  override def encode(value: RDD[String]): RDD[Payload] = {
-    value.map(v => Payload(encode(v)))
+class StringKafkaPayload(config: StringKafkaPayloadConfig) extends KafkaPayloadCodec[String] {
+
+  override def decoder(ssc: StreamingContext): KafkaPayload => Try[String] = {
+    payload => decode(payload.value)
+  }
+
+  override def encoder(ssc: StreamingContext): String => Try[KafkaPayload] = {
+    value => Try {
+      KafkaPayload(encode(value))
+    }
+  }
+
+  private def decode(bytes: Array[Byte]): Try[String] = Try {
+    new String(bytes, config.encoding)
   }
 
   private def encode(s: String): Array[Byte] = s.getBytes(config.encoding)
 
 }
 
-object StringPayloadEncoder {
-  def apply(config: StringPayloadEncoderConfig): StringPayloadEncoder = new StringPayloadEncoder(config)
+object StringKafkaPayload {
+  def apply(config: StringKafkaPayloadConfig): StringKafkaPayload = new StringKafkaPayload(config)
 }
 
-case class StringPayloadEncoderConfig(
-                                       encoding: String)
-  extends Serializable
+case class StringKafkaPayloadConfig(encoding: String) extends Serializable
 

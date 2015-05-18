@@ -18,9 +18,8 @@ package example
 
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-import org.apache.spark.streaming.Duration
 import org.apache.spark.streaming.dstream.DStream
-import org.mkuthan.spark.payload.{Payload, PayloadDecoder, PayloadEncoder}
+import org.apache.spark.streaming.{Duration, StreamingContext}
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -29,23 +28,30 @@ trait WordCount {
   type WordCount = (String, Int)
 
   def countWords(
+                  ssc: StreamingContext,
                   lines: DStream[String],
-                  stopWords: Broadcast[Set[String]],
-                  windowDuration: Broadcast[FiniteDuration],
-                  slideDuration: Broadcast[FiniteDuration]): DStream[WordCount] = {
+                  stopWords: Set[String],
+                  windowDuration: FiniteDuration,
+                  slideDuration: FiniteDuration): DStream[WordCount] = {
 
     import scala.language.implicitConversions
     implicit def finiteDurationToSparkDuration(value: FiniteDuration): Duration = new Duration(value.toMillis)
+
+    val sc = ssc.sparkContext
+
+    val stopWordsVar = sc.broadcast(stopWords)
+    val windowDurationVar = sc.broadcast(windowDuration)
+    val slideDurationVar = sc.broadcast(slideDuration)
 
     val words = lines.
       transform(splitLine).
       transform(skipEmptyWords).
       transform(toLowerCase).
-      transform(skipStopWords(stopWords))
+      transform(skipStopWords(stopWordsVar))
 
     val wordCounts = words.
       map(word => (word, 1)).
-      reduceByKeyAndWindow(_ + _, _ - _, windowDuration.value, slideDuration.value)
+      reduceByKeyAndWindow(_ + _, _ - _, windowDurationVar.value, slideDurationVar.value)
 
     wordCounts.
       transform(skipEmptyWordCounts).
@@ -66,24 +72,3 @@ trait WordCount {
   val sortWordCounts = (wordCounts: RDD[WordCount]) => wordCounts.sortByKey()
 
 }
-
-trait WordCountDecoder {
-  def decodePayload(
-                     payload: DStream[Payload],
-                     decoder: Broadcast[PayloadDecoder[String]]):
-  DStream[String] = {
-    payload.transform(p => decoder.value.decode(p))
-  }
-}
-
-trait WordCountEncoder {
-  def encodePayload(
-                     countedWords: DStream[(String, Int)],
-                     encoder: Broadcast[PayloadEncoder[String]]):
-  DStream[Payload] = {
-    countedWords.
-      map(cw => cw.toString()).
-      transform(cws => encoder.value.encode(cws))
-  }
-}
-

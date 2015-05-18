@@ -14,27 +14,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.mkuthan.spark.sinks.kafka
+package org.mkuthan.spark
 
-import org.apache.kafka.clients.producer.{RecordMetadata, Callback, ProducerRecord}
+import org.apache.kafka.clients.producer.{Callback, ProducerRecord, RecordMetadata}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import org.mkuthan.spark.payload.Payload
-import org.mkuthan.spark.sinks.DStreamSink
 
-class KafkaDStreamSink(config: Map[String, String]) extends DStreamSink {
+class KafkaDStreamSink(producer: LazyKafkaProducer) {
 
-  private val KEY_SERIALIZER = "org.apache.kafka.common.serialization.ByteArraySerializer"
-  private val VALUE_SERIALIZER = "org.apache.kafka.common.serialization.ByteArraySerializer"
-
-  val defaultConfig = Map(
-    "key.serializer" -> KEY_SERIALIZER,
-    "value.serializer" -> VALUE_SERIALIZER
-  )
-
-  private val producer = new KafkaProducerSingleton(defaultConfig ++ config)
-
-  override def write(ssc: StreamingContext, topic: String, stream: DStream[Payload]): Unit = {
+  def write(ssc: StreamingContext, topic: String, stream: DStream[KafkaPayload]): Unit = {
     val topicVar = ssc.sparkContext.broadcast(topic)
     val producerVar = ssc.sparkContext.broadcast(producer)
 
@@ -53,7 +41,7 @@ class KafkaDStreamSink(config: Map[String, String]) extends DStreamSink {
     stream.foreachRDD { rdd =>
       rdd.foreach { record =>
         val topic = topicVar.value
-        val producer = producerVar.value.holder
+        val producer = producerVar.value.producer
         val callback = callbackVar.value
 
         producer.send(
@@ -67,5 +55,18 @@ class KafkaDStreamSink(config: Map[String, String]) extends DStreamSink {
 }
 
 object KafkaDStreamSink {
-  def apply(config: Map[String, String]): KafkaDStreamSink = new KafkaDStreamSink(config)
+  def apply(config: Map[String, String]): KafkaDStreamSink = {
+
+    val KEY_SERIALIZER = "org.apache.kafka.common.serialization.ByteArraySerializer"
+    val VALUE_SERIALIZER = "org.apache.kafka.common.serialization.ByteArraySerializer"
+
+    val defaultConfig = Map(
+      "key.serializer" -> KEY_SERIALIZER,
+      "value.serializer" -> VALUE_SERIALIZER
+    )
+
+    val producer = new LazyKafkaProducer(defaultConfig ++ config)
+
+    new KafkaDStreamSink(producer)
+  }
 }

@@ -41,10 +41,11 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     val output = mutable.ArrayBuffer.empty[Array[WordCount]]
 
     countWords(
+      ssc,
       ssc.queueStream(input),
-      sc.broadcast(DEFAULT_STOP_WORDS),
-      sc.broadcast(DEFAULT_WINDOW_DURATION),
-      sc.broadcast(DEFAULT_SLIDE_DURATION)
+      DEFAULT_STOP_WORDS,
+      DEFAULT_WINDOW_DURATION,
+      DEFAULT_SLIDE_DURATION
     ).foreachRDD(rdd => output += rdd.collect())
 
     ssc.start()
