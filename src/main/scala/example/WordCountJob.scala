@@ -94,14 +94,11 @@ object WordCountJobConfig {
   import net.ceedubs.ficus.Ficus._
   import net.ceedubs.ficus.readers.ArbitraryTypeReader.arbitraryTypeValueReader
 
-  def apply(applicationConfig: Option[Config] = None): WordCountJobConfig = {
+  def apply(): WordCountJobConfig = apply(ConfigFactory.load)
 
-    val rootConfig = applicationConfig match {
-      case Some(c) => c.withFallback(ConfigFactory.load)
-      case _ => ConfigFactory.load
-    }
+  def apply(applicationConfig: Config): WordCountJobConfig = {
 
-    val config = rootConfig.getConfig("wordCountJob")
+    val config = applicationConfig.getConfig("wordCountJob")
 
     new WordCountJobConfig(
       config.as[String]("input.topic"),

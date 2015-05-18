@@ -43,19 +43,19 @@ trait WordCount {
     val windowDurationVar = sc.broadcast(windowDuration)
     val slideDurationVar = sc.broadcast(slideDuration)
 
-    val words = lines.
-      transform(splitLine).
-      transform(skipEmptyWords).
-      transform(toLowerCase).
-      transform(skipStopWords(stopWordsVar))
+    val words = lines
+      .transform(splitLine)
+      .transform(skipEmptyWords)
+      .transform(toLowerCase)
+      .transform(skipStopWords(stopWordsVar))
 
-    val wordCounts = words.
-      map(word => (word, 1)).
-      reduceByKeyAndWindow(_ + _, _ - _, windowDurationVar.value, slideDurationVar.value)
+    val wordCounts = words
+      .map(word => (word, 1))
+      .reduceByKeyAndWindow(_ + _, _ - _, windowDurationVar.value, slideDurationVar.value)
 
-    wordCounts.
-      transform(skipEmptyWordCounts).
-      transform(sortWordCounts)
+    wordCounts
+      .transform(skipEmptyWordCounts)
+      .transform(sortWordCounts)
   }
 
   val toLowerCase = (words: RDD[String]) => words.map(word => word.toLowerCase)
