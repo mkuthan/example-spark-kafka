@@ -16,11 +16,13 @@
 
 package org.mkuthan.spark
 
+import kafka.common.TopicAndPartition
 import org.apache.kafka.clients.producer.{Callback, ProducerRecord, RecordMetadata}
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
+import org.apache.spark.streaming.kafka.{HasOffsetRanges, OffsetRange}
 
-class KafkaDStreamSink(producer: LazyKafkaProducer) {
+class KafkaDStreamSink(producer: LazyKafkaProducer, offsetStore: OffsetStore) {
 
   def write(ssc: StreamingContext, topic: String, stream: DStream[KafkaPayload]): Unit = {
     val topicVar = ssc.sparkContext.broadcast(topic)
@@ -39,13 +41,21 @@ class KafkaDStreamSink(producer: LazyKafkaProducer) {
     })
 
     stream.foreachRDD { rdd =>
-      rdd.foreach { record =>
+      val offsets = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
+
+      rdd.mapPartitionsWithIndex { (i, payloads) =>
+        val offsetRange: OffsetRange = offsets(i)
+        val topicAndPartition = TopicAndPartition(offsetRange.topic, offsetRange.partition)
+
+        offsetStore.update(topicAndPartition, offsetRange.untilOffset)
+        payloads
+      }.foreach { payload =>
         val topic = topicVar.value
         val producer = producerVar.value.producer
         val callback = callbackVar.value
 
         producer.send(
-          new ProducerRecord(topic, record.value),
+          new ProducerRecord(topic, payload.value),
           callback
         )
       }
@@ -55,7 +65,7 @@ class KafkaDStreamSink(producer: LazyKafkaProducer) {
 }
 
 object KafkaDStreamSink {
-  def apply(config: Map[String, String]): KafkaDStreamSink = {
+  def apply(config: Map[String, String], offsetStore: OffsetStore): KafkaDStreamSink = {
 
     val KEY_SERIALIZER = "org.apache.kafka.common.serialization.ByteArraySerializer"
     val VALUE_SERIALIZER = "org.apache.kafka.common.serialization.ByteArraySerializer"
@@ -67,6 +77,6 @@ object KafkaDStreamSink {
 
     val producer = new LazyKafkaProducer(defaultConfig ++ config)
 
-    new KafkaDStreamSink(producer)
+    new KafkaDStreamSink(producer, offsetStore)
   }
 }

@@ -64,8 +64,10 @@ object WordCountJob {
   def main(args: Array[String]): Unit = {
     val config = WordCountJobConfig()
 
-    val source = KafkaDStreamSource(config.sourceKafka)
-    val sink = KafkaDStreamSink(config.sinkKafka)
+    val offsetStore = new DefaultOffsetStore
+
+    val source = KafkaDStreamSource(config.sourceKafka, offsetStore)
+    val sink = KafkaDStreamSink(config.sinkKafka, offsetStore)
 
     val codec = StringKafkaPayloadCodec(config.stringCodec)
 

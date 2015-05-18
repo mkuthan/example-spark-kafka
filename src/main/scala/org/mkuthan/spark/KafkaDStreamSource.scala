@@ -16,27 +16,34 @@
 
 package org.mkuthan.spark
 
+import kafka.message.MessageAndMetadata
 import kafka.serializer.DefaultDecoder
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka.KafkaUtils
 
-class KafkaDStreamSource(config: Map[String, String]) {
+class KafkaDStreamSource(kafkaParams: Map[String, String], offsetStore: OffsetStore) {
 
   def createSource(ssc: StreamingContext, topic: String): DStream[KafkaPayload] = {
-    val kafkaParams = config
-    val kafkaTopics = Set(topic)
+    val fromOffsets = offsetStore.findByTopic(topic)
+    val messageHandler = (mmd: MessageAndMetadata[Array[Byte], Array[Byte]]) => KafkaPayload(mmd.message())
 
     KafkaUtils.
-      createDirectStream[Array[Byte], Array[Byte], DefaultDecoder, DefaultDecoder](
+      createDirectStream[Array[Byte], Array[Byte], DefaultDecoder, DefaultDecoder, KafkaPayload](
         ssc,
         kafkaParams,
-        kafkaTopics).
-      map(dStream => KafkaPayload(dStream._2))
+        fromOffsets,
+        messageHandler)
   }
 
 }
 
 object KafkaDStreamSource {
-  def apply(config: Map[String, String]): KafkaDStreamSource = new KafkaDStreamSource(config)
+  def apply(config: Map[String, String], offsetStore: OffsetStore): KafkaDStreamSource = {
+    new KafkaDStreamSource(config, offsetStore)
+  }
 }
+
+
+
+
