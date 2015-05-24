@@ -47,17 +47,21 @@ class KafkaDStreamSink(producer: LazyKafkaProducer, offsetStore: OffsetStore) {
         val offsetRange: OffsetRange = offsets(i)
         val topicAndPartition = TopicAndPartition(offsetRange.topic, offsetRange.partition)
 
-        offsetStore.update(topicAndPartition, offsetRange.untilOffset)
-        payloads
-      }.foreach { payload =>
         val topic = topicVar.value
         val producer = producerVar.value.producer
         val callback = callbackVar.value
 
-        producer.send(
-          new ProducerRecord(topic, payload.value),
-          callback
-        )
+        payloads.foreach { payload =>
+          producer.send(
+            new ProducerRecord(topic, payload.value),
+            callback
+          )
+        }
+
+        offsetStore.update(topicAndPartition, offsetRange.untilOffset)
+        Iterator.empty
+      }.foreach {
+        ()
       }
     }
   }
