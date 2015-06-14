@@ -16,9 +16,12 @@
 
 package org.mkuthan.spark
 
-import org.apache.kafka.clients.producer.{Callback, ProducerRecord, RecordMetadata}
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
+
+import scala.util.{Failure, Success, Try}
 
 class KafkaDStreamSink(producer: LazyKafkaProducer) {
 
@@ -26,28 +29,29 @@ class KafkaDStreamSink(producer: LazyKafkaProducer) {
     val topicVar = ssc.sparkContext.broadcast(topic)
     val producerVar = ssc.sparkContext.broadcast(producer)
 
-    val successCounter = ssc.sparkContext.accumulator(0L, "success counter")
-    val failureCounter = ssc.sparkContext.accumulator(0L, "failure counter")
+    val successCounter = ssc.sparkContext.accumulator(0L, "Success counter")
+    val failureCounter = ssc.sparkContext.accumulator(0L, "Failure counter")
 
-    val callbackVar = ssc.sparkContext.broadcast(new Callback {
-      override def onCompletion(recordMetadata: RecordMetadata, ex: Exception): Unit = Option(ex) match {
-        case Some(ex) =>
-          failureCounter += 1
-        case _ =>
-          successCounter += 1
-      }
-    })
+    // cache to speed-up processing if action fails
+    stream.persist(StorageLevel.MEMORY_ONLY_SER)
 
     stream.foreachRDD { rdd =>
+      // TODO: report counters somewhere
+
       rdd.foreach { record =>
         val topic = topicVar.value
         val producer = producerVar.value.producer
-        val callback = callbackVar.value
 
-        producer.send(
-          new ProducerRecord(topic, record.value),
-          callback
-        )
+        val future = producer.send(new ProducerRecord(topic, record.value))
+
+        Try(future.get) match {
+          case Failure(ex) =>
+            failureCounter += 1
+            // TODO: how errors in action are handled by spark
+            throw ex
+          case Success(_) =>
+            successCounter += 1
+        }
       }
     }
   }

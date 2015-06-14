@@ -46,7 +46,9 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
       DEFAULT_STOP_WORDS,
       DEFAULT_WINDOW_DURATION,
       DEFAULT_SLIDE_DURATION
-    ).foreachRDD(rdd => output += rdd.collect())
+    ).foreachRDD{
+      rdd => output += rdd.collect()
+    }
 
     ssc.start()
 
