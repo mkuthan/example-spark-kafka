@@ -21,7 +21,7 @@ object ApplicationBuild extends Build {
 
   object Versions {
     val kafka = "0.8.2.1"
-    val spark = "1.3.0"
+    val spark = "1.4.0"
   }
 
   val projectName = "example-spark-kafka"
@@ -29,8 +29,9 @@ object ApplicationBuild extends Build {
   val common = Seq(
     version := "1.0",
     organization := "http://mkuthan.github.io/",
-    scalaVersion := "2.10.5",
+    scalaVersion := "2.11.5",
     parallelExecution in Test := false,
+    fork in run:= true,
     fork in Test := true
   )
 
@@ -64,7 +65,7 @@ object ApplicationBuild extends Build {
     "org.apache.spark" %% "spark-streaming-kafka" % Versions.spark,
 
     "com.typesafe" % "config" % "1.2.1",
-    "net.ceedubs" %% "ficus" % "1.0.1",
+    "net.ceedubs" %% "ficus" % "1.1.1",
 
     "org.slf4j" % "slf4j-api" % "1.7.10",
     "ch.qos.logback" % "logback-classic" % "1.1.2",
