@@ -16,18 +16,18 @@
 
 package org.mkuthan.spark
 
-import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
 import scala.util.{Failure, Success, Try}
 
-class KafkaDStreamSink(producer: LazyKafkaProducer) {
+class KafkaDStreamSink(createProducer: () => KafkaProducer[Array[Byte], Array[Byte]]) extends Serializable {
 
   def write(ssc: StreamingContext, topic: String, stream: DStream[KafkaPayload]): Unit = {
     val topicVar = ssc.sparkContext.broadcast(topic)
-    val producerVar = ssc.sparkContext.broadcast(producer)
+    val createProducerVar = ssc.sparkContext.broadcast(createProducer)
 
     val successCounter = ssc.sparkContext.accumulator(0L, "Success counter")
     val failureCounter = ssc.sparkContext.accumulator(0L, "Failure counter")
@@ -40,7 +40,7 @@ class KafkaDStreamSink(producer: LazyKafkaProducer) {
 
       rdd.foreach { record =>
         val topic = topicVar.value
-        val producer = producerVar.value.producer
+        val producer = createProducerVar.value()
 
         val future = producer.send(new ProducerRecord(topic, record.value))
 
@@ -59,6 +59,9 @@ class KafkaDStreamSink(producer: LazyKafkaProducer) {
 }
 
 object KafkaDStreamSink {
+
+  import scala.collection.JavaConversions._
+
   def apply(config: Map[String, String]): KafkaDStreamSink = {
 
     val KEY_SERIALIZER = "org.apache.kafka.common.serialization.ByteArraySerializer"
@@ -69,8 +72,16 @@ object KafkaDStreamSink {
       "value.serializer" -> VALUE_SERIALIZER
     )
 
-    val producer = new LazyKafkaProducer(defaultConfig ++ config)
+    val f = () => {
+      val producer = new KafkaProducer[Array[Byte], Array[Byte]](defaultConfig ++ config)
 
-    new KafkaDStreamSink(producer)
+      sys.addShutdownHook {
+        producer.close()
+      }
+
+      producer
+    }
+
+    new KafkaDStreamSink(f)
   }
 }

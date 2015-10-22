@@ -45,8 +45,8 @@ object ApplicationBuild extends Build {
     "-Xlint",
     "-Yno-adapted-args",
     "-Ywarn-dead-code",
-    "-Ywarn-numeric-widen"
-    // "-Ywarn-unused-import"
+    "-Ywarn-numeric-widen",
+    "-Ywarn-unused-import"
   )
 
   val customResolvers = Seq(
