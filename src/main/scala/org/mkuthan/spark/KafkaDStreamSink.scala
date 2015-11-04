@@ -52,13 +52,6 @@ class KafkaDStreamSink(createProducer: () => KafkaProducer[Array[Byte], Array[By
         val results = futures.map { future =>
           Try {
             future.get(timeout.toMillis, TimeUnit.MILLISECONDS)
-          } match {
-            case f@Failure(ex) =>
-              failureCounter += 1
-              f
-            case s@Success(_) =>
-              successCounter += 1
-              s
           }
         }
 
