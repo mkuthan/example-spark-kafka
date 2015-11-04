@@ -49,21 +49,19 @@ class KafkaDStreamSink(createProducer: () => KafkaProducer[Array[Byte], Array[By
           producer.send(new ProducerRecord(topic, record.value)
         }
 
-        val results = futures.map { future =>
+        futures.map { future =>
           Try {
             future.get(timeout.toMillis, TimeUnit.MILLISECONDS)
           }
-        }
-
-        results.collect {
+        }.collect {
           case Failure(_) =>
             failureCounter += 1
           case Success(_) =>
             successCounter += 1
+        }.foreach {
+          // to throw or not to throw exception?
+          case Failure(ex) => throw ex
         }
-
-        // to throw or not to throw exception?
-        results.foreach { case Failure(ex) => throw ex }
       }
     }
   }
