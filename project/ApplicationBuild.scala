@@ -14,28 +14,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import sbt._
 import sbt.Keys._
+import sbt._
 
 object ApplicationBuild extends Build {
 
   object Versions {
     val kafka = "0.8.2.1"
-    val spark = "1.4.0"
+    val spark = "1.5.1"
   }
 
   val projectName = "example-spark-kafka"
 
-  val common = Seq(
+  val commonSettings = Seq(
     version := "1.0",
     organization := "http://mkuthan.github.io/",
     scalaVersion := "2.11.5",
-    parallelExecution in Test := false,
-    fork in run:= true,
-    fork in Test := true
+    fork  := true,
+    parallelExecution in Test := false
   )
 
-  val customScalacOptions = Seq(
+  val commonScalacOptions = Seq(
     "-deprecation",
     "-encoding", "UTF-8",
     "-feature",
@@ -49,14 +48,7 @@ object ApplicationBuild extends Build {
     "-Ywarn-unused-import"
   )
 
-  val customResolvers = Seq(
-    Classpaths.sbtPluginReleases,
-    Classpaths.typesafeReleases,
-    "Sonatype OSS Releases" at "http://oss.sonatype.org/content/repositories/releases/",
-    "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases"
-  )
-
-  val customLibraryDependencies = Seq(
+  val commonLibraryDependencies = Seq(
     "org.apache.kafka" %% "kafka" % Versions.kafka,
     "org.apache.kafka" % "kafka-clients" % Versions.kafka,
 
@@ -73,15 +65,14 @@ object ApplicationBuild extends Build {
     "org.scalatest" %% "scalatest" % "2.2.4" % "test"
   )
 
-  val customExcludeDependencies = Seq(
+  val commonExcludeDependencies = Seq(
     "org.slf4j" % "slf4j-log4j12"
   )
 
   lazy val main = Project(projectName, base = file("."))
-    .settings(common)
-    .settings(scalacOptions ++= customScalacOptions)
-    .settings(resolvers ++= customResolvers)
-    .settings(libraryDependencies ++= customLibraryDependencies)
-    .settings(excludeDependencies ++= customExcludeDependencies)
+    .settings(commonSettings)
+    .settings(scalacOptions ++= commonScalacOptions)
+    .settings(libraryDependencies ++= commonLibraryDependencies)
+    .settings(excludeDependencies ++= commonExcludeDependencies)
 }
 

@@ -16,16 +16,19 @@
 
 package org.mkuthan.spark
 
+import java.util.concurrent.TimeUnit
+
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
+import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success, Try}
 
 class KafkaDStreamSink(createProducer: () => KafkaProducer[Array[Byte], Array[Byte]]) extends Serializable {
 
-  def write(ssc: StreamingContext, topic: String, stream: DStream[KafkaPayload]): Unit = {
+  def write(ssc: StreamingContext, topic: String, stream: DStream[KafkaPayload], timeout: FiniteDuration): Unit = {
     val topicVar = ssc.sparkContext.broadcast(topic)
     val createProducerVar = ssc.sparkContext.broadcast(createProducer)
 
@@ -38,24 +41,39 @@ class KafkaDStreamSink(createProducer: () => KafkaProducer[Array[Byte], Array[By
     stream.foreachRDD { rdd =>
       // TODO: report counters somewhere
 
-      rdd.foreach { record =>
+      rdd.foreachPartition { records =>
         val topic = topicVar.value
         val producer = createProducerVar.value()
 
-        val future = producer.send(new ProducerRecord(topic, record.value))
+        val futures = records.map { record =>
+          producer.send(new ProducerRecord(topic, record.value)
+        }
 
-        Try(future.get) match {
-          case Failure(ex) =>
+        val results = futures.map { future =>
+          Try {
+            future.get(timeout.toMillis, TimeUnit.MILLISECONDS)
+          } match {
+            case f@Failure(ex) =>
+              failureCounter += 1
+              f
+            case s@Success(_) =>
+              successCounter += 1
+              s
+          }
+        }
+
+        results.collect {
+          case Failure(_) =>
             failureCounter += 1
-            // TODO: how errors in action are handled by spark
-            throw ex
           case Success(_) =>
             successCounter += 1
         }
+
+        // to throw or not to throw exception?
+        results.foreach { case Failure(ex) => throw ex }
       }
     }
   }
-
 }
 
 object KafkaDStreamSink {

@@ -18,7 +18,7 @@ package example
 
 import org.mkuthan.spark._
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{FiniteDuration, _}
 
 class WordCountJob(
                     config: WordCountJobConfig,
@@ -53,7 +53,7 @@ class WordCountJob(
         .map(codec.encoder(ssc))
         .flatMap(_.toOption)
 
-      sink.write(ssc, config.outputTopic, output)
+      sink.write(ssc, config.outputTopic, output, 500.milliseconds)
     }
   }
 
