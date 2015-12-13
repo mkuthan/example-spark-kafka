@@ -20,7 +20,7 @@ import sbt._
 object ApplicationBuild extends Build {
 
   object Versions {
-    val kafka = "0.8.2.1"
+    val kafka = "0.9.0.0"
     val spark = "1.5.1"
   }
 
@@ -29,7 +29,7 @@ object ApplicationBuild extends Build {
   val commonSettings = Seq(
     version := "1.0",
     organization := "http://mkuthan.github.io/",
-    scalaVersion := "2.11.5",
+    scalaVersion := "2.11.7",
     fork  := true,
     parallelExecution in Test := false
   )
@@ -59,6 +59,7 @@ object ApplicationBuild extends Build {
     "com.typesafe" % "config" % "1.2.1",
     "net.ceedubs" %% "ficus" % "1.1.1",
 
+    "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
     "org.slf4j" % "slf4j-api" % "1.7.10",
     "ch.qos.logback" % "logback-classic" % "1.1.2",
 

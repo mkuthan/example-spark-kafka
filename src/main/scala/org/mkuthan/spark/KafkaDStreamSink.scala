@@ -16,18 +16,21 @@
 
 package org.mkuthan.spark
 
-import java.util.concurrent.TimeUnit
-
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
+import com.typesafe.scalalogging.LazyLogging
+import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerRecord, RecordMetadata}
+import org.apache.kafka.common.TopicPartition
+import org.apache.spark.TaskContext
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
+import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
-import scala.util.{Failure, Success, Try}
 
-class KafkaDStreamSink(createProducer: () => KafkaProducer[Array[Byte], Array[Byte]]) extends Serializable {
+class KafkaDStreamSink(createProducer: () => KafkaProducer[Array[Byte], Array[Byte]])
+  extends Serializable with LazyLogging {
 
+  // scalastyle:off method.length
   def write(ssc: StreamingContext, topic: String, stream: DStream[KafkaPayload], timeout: FiniteDuration): Unit = {
     val topicVar = ssc.sparkContext.broadcast(topic)
     val createProducerVar = ssc.sparkContext.broadcast(createProducer)
@@ -39,32 +42,56 @@ class KafkaDStreamSink(createProducer: () => KafkaProducer[Array[Byte], Array[By
     stream.persist(StorageLevel.MEMORY_ONLY_SER)
 
     stream.foreachRDD { rdd =>
-      // TODO: report counters somewhere
-
       rdd.foreachPartition { records =>
         val topic = topicVar.value
         val producer = createProducerVar.value()
 
-        val futures = records.map { record =>
-          producer.send(new ProducerRecord(topic, record.value)
+        // TODO: synchronize collections, callback is called in Kafka producer IO thread
+        val offsets = mutable.ArrayBuffer[(TopicPartition, Long)]()
+        val exceptions = mutable.ArrayBuffer[Exception]()
+
+        def callback = new Callback {
+          override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = {
+            if (Option(metadata).isDefined) {
+              val offset = (new TopicPartition(metadata.topic, metadata.partition), metadata.offset)
+              offsets += offset
+              successCounter += 1
+            }
+
+            if (Option(exception).isDefined) {
+              exceptions += exception
+              failureCounter += 1
+            }
+          }
         }
 
-        futures.map { future =>
-          Try {
-            future.get(timeout.toMillis, TimeUnit.MILLISECONDS)
+        records.foreach { record =>
+          producer.send(new ProducerRecord(topic, record.value), callback)
+        }
+
+        producer.flush()
+
+        if (exceptions.isEmpty) {
+          // TODO: what to do with collected offsets?
+        } else {
+          exceptions.foreach { ex =>
+            logger.debug("Could not send message for partition", ex)
           }
-        }.collect {
-          case Failure(_) =>
-            failureCounter += 1
-          case Success(_) =>
-            successCounter += 1
-        }.foreach {
-          // to throw or not to throw exception?
-          case Failure(ex) => throw ex
+
+          // https://github.com/apache/spark/pull/5927
+          val context = TaskContext.get
+          throw new KafkaDStreamSinkException(
+            s"Could not send partition ${context.partitionId} to topic $topic, attempt ${context.attemptNumber}"
+          )
         }
       }
+
+      logger.debug("Messages sent {}", successCounter)
+      logger.debug("Messages failed {}", fallbackStringCanBuildFrom)
     }
   }
+  // scalastyle:on method.length
+
 }
 
 object KafkaDStreamSink {
@@ -94,3 +121,5 @@ object KafkaDStreamSink {
     new KafkaDStreamSink(f)
   }
 }
+
+class KafkaDStreamSinkException(message: String) extends RuntimeException(message)
