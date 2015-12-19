@@ -29,10 +29,10 @@ class KafkaDStreamSource(config: Map[String, String]) {
 
     KafkaUtils.
       createDirectStream[Array[Byte], Array[Byte], DefaultDecoder, DefaultDecoder](
-        ssc,
-        kafkaParams,
-        kafkaTopics).
-      map(dStream => KafkaPayload(dStream._2))
+      ssc,
+      kafkaParams,
+      kafkaTopics).
+      map(dstream => KafkaPayload(Option(dstream._1), dstream._2))
   }
 
 }

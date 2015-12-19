@@ -16,6 +16,18 @@
 
 package org.mkuthan.spark
 
-case class KafkaPayload(key: Option[Array[Byte]], value: Array[Byte])
+import org.apache.spark.streaming.dstream.DStream
 
+trait KafkaSink {
+  def writeToKafka(config: Map[String, String], topic: String): Unit
+}
 
+object KafkaSink {
+
+  import scala.language.implicitConversions
+
+  implicit def createKafkaDStreamSink(dstream: DStream[KafkaPayload]): KafkaSink = {
+    new KafkaDStreamSink(dstream)
+  }
+
+}

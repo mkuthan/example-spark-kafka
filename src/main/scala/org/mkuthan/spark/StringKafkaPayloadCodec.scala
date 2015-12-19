@@ -16,28 +16,35 @@
 
 package org.mkuthan.spark
 
-import org.apache.spark.streaming.StreamingContext
-
 import scala.util.Try
 
-class StringKafkaPayloadCodec(config: StringKafkaPayloadCodecConfig) extends KafkaPayloadCodec[String] {
+class StringKafkaPayloadCodec(config: StringKafkaPayloadCodecConfig) extends KafkaPayloadCodec[String, String] {
 
-  override def decoder(ssc: StreamingContext): KafkaPayload => Try[String] = {
-    payload => decode(payload.value)
-  }
-
-  override def encoder(ssc: StreamingContext): String => Try[KafkaPayload] = {
-    value => Try {
-      KafkaPayload(encode(value))
+  override def decode(payload: KafkaPayload): Try[(Option[String], String)] = {
+    def decode(b: Option[Array[Byte]]): Try[Option[String]] = Try {
+      b.map {
+        new String(_, config.encoding)
+      }
     }
+
+    for {
+      key <- decode(payload.key)
+      value <- decode(Some(payload.value))
+    } yield (key, value.get)
   }
 
-  private def decode(bytes: Array[Byte]): Try[String] = Try {
-    new String(bytes, config.encoding)
+  override def encode(kv: (Option[String], String)): Try[KafkaPayload] = {
+    def encode(s: Option[String]): Try[Option[Array[Byte]]] = Try {
+      s.map {
+        _.getBytes(config.encoding)
+      }
+    }
+
+    for {
+      key <- encode(kv._1)
+      value <- encode(Some(kv._2))
+    } yield KafkaPayload(key, value.get)
   }
-
-  private def encode(s: String): Array[Byte] = s.getBytes(config.encoding)
-
 }
 
 object StringKafkaPayloadCodec {

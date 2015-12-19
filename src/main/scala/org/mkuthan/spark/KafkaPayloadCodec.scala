@@ -16,14 +16,12 @@
 
 package org.mkuthan.spark
 
-import org.apache.spark.streaming.StreamingContext
-
 import scala.util.Try
 
-trait KafkaPayloadCodec[V] extends Serializable {
+trait KafkaPayloadCodec[K, V] extends Serializable {
 
-  def decoder(ssc: StreamingContext): KafkaPayload => Try[V]
+  def decode(payload: KafkaPayload): Try[(Option[K], V)]
 
-  def encoder(ssc: StreamingContext): V => Try[KafkaPayload]
+  def encode(kv: (Option[K], V)): Try[KafkaPayload]
 
 }

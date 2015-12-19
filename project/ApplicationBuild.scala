@@ -20,7 +20,7 @@ import sbt._
 object ApplicationBuild extends Build {
 
   object Versions {
-    val kafka = "0.9.0.0"
+    val kafka = "0.8.2.1"
     val spark = "1.5.1"
   }
 
@@ -30,8 +30,9 @@ object ApplicationBuild extends Build {
     version := "1.0",
     organization := "http://mkuthan.github.io/",
     scalaVersion := "2.11.7",
-    fork  := true,
-    parallelExecution in Test := false
+    fork := true,
+    parallelExecution in Test := false,
+    cancelable in Global := true
   )
 
   val commonScalacOptions = Seq(

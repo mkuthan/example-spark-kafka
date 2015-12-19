@@ -16,14 +16,15 @@
 
 package example
 
+import org.apache.spark.storage.StorageLevel
+import org.mkuthan.spark.KafkaSink._
 import org.mkuthan.spark._
 
-import scala.concurrent.duration.{FiniteDuration, _}
+import scala.concurrent.duration.FiniteDuration
 
 class WordCountJob(
                     config: WordCountJobConfig,
                     source: KafkaDStreamSource,
-                    sink: KafkaDStreamSink,
                     codec: StringKafkaPayloadCodec)
   extends SparkStreamingApplication with WordCount {
 
@@ -33,12 +34,15 @@ class WordCountJob(
 
   def start(): Unit = {
     withSparkStreamingContext { (sc, ssc) =>
-
       val input = source.createSource(ssc, config.inputTopic)
 
+      val codecVar = sc.broadcast(codec)
+
+      // decode Kafka payload (e.g: from Avro)
       val lines = input
-        .map(codec.decoder(ssc))
-        .flatMap(_.toOption)
+        .map(codecVar.value.decode(_))
+        .flatMap(_.toOption) // only decoded payloads
+        .map(_._2) // only value
 
       val countedWords = countWords(
         ssc,
@@ -48,12 +52,15 @@ class WordCountJob(
         config.slideDuration
       )
 
+      // encode Kafka payload (e.g: to Avro)
       val output = countedWords
-        .map(cw => cw.toString())
-        .map(codec.encoder(ssc))
-        .flatMap(_.toOption)
+        .map(countedWord => codecVar.value.encode((None, countedWord.toString)))
+        .flatMap(_.toOption) // only encoded payloads
 
-      sink.write(ssc, config.outputTopic, output, 500.milliseconds)
+      // cache to speed-up processing if action fails
+      output.persist(StorageLevel.MEMORY_ONLY_SER)
+
+      output.writeToKafka(config.sinkKafka, config.outputTopic)
     }
   }
 
@@ -65,11 +72,10 @@ object WordCountJob {
     val config = WordCountJobConfig()
 
     val source = KafkaDStreamSource(config.sourceKafka)
-    val sink = KafkaDStreamSink(config.sinkKafka)
 
     val codec = StringKafkaPayloadCodec(config.stringCodec)
 
-    val streamingJob = new WordCountJob(config, source, sink, codec)
+    val streamingJob = new WordCountJob(config, source, codec)
     streamingJob.start()
   }
 
