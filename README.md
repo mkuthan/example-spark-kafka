@@ -1,46 +1,64 @@
-# Apache Kafka and Apache Spark example
+# Apache Spark and Apache Kafka integration example
 
 [![Build Status](https://travis-ci.org/mkuthan/example-spark-kafka.svg?branch=master)](https://travis-ci.org/mkuthan/example-spark-kafka) [![Coverage Status](https://img.shields.io/coveralls/mkuthan/example-spark-kafka.svg)](https://coveralls.io/r/mkuthan/example-spark-kafka?branch=master)
 
+This example shows how to send processing results from Spark Streaming to Apache Kafka in reliable way.
+The example follows Spark convention for integration with external data sinks:
+
+    // import implicit conversions
+    import org.mkuthan.spark.KafkaDStreamSink._
+    
+    // send dstream to Kafka
+    dstream.sendToKafka(kafkaProducerConfig, topic)
+
+
+## Features
+
+* [KafkaDStreamSink](src/main/scala/org/mkuthan/spark/KafkaDStreamSink.scala) for sending streaming results to Apache Kafka in reliable way.
+* Stream processing fail fast, if the results could not be send to Apache Kafka.
+* Stream processing is blocked (back pressure), if the Kafka producer is too slow.
+* Stream processing results are flushed from Kafka producer internal buffer.
+* Kafka payload decoder abstraction (see [KafkaPayloadCodec](src/main/scala/org/mkuthan/spark/KafkaPayloadCodec.scala)) for encoding and decoding Kafka payload.
+* [StringKafkaPayloadCodec](src/main/scala/org/mkuthan/spark/StringKafkaPayloadCodec.scala) and [AvroKafkaPayloadCodec](src/main/scala/org/mkuthan/spark/AvroKafkaPayloadCodec.scala) provided (but [SchemaRepositoryClient](src/main/scala/org/mkuthan/spark/SchemaRepositoryClient.scala) needs to be implemented).
+* Kafka producer is shared by all tasks on single JVM (see [KafkaProducerFactory](src/main/scala/org/mkuthan/spark/KafkaProducerFactory.scala)).
+* Kafka producer is properly closed when Spark executor is shutdown (see [KafkaProducerFactory](src/main/scala/org/mkuthan/spark/KafkaProducerFactory.scala)).
 
 ## Quickstart guide
 
 Start ZooKeeper server:
 
-```
-./bin/zookeeper-server-start.sh config/zookeeper.properties
-```
+    ./bin/zookeeper-server-start.sh config/zookeeper.properties
 
 Start Kafka server:
 
-```
-./bin/kafka-server-start.sh config/server.properties
-```
+    ./bin/kafka-server-start.sh config/server.properties
 
 Create input topic:
 
-```
-./bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 3 --topic input
-```
+    ./bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 3 --topic input
 
 Create output topic:
 
-```
-./bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 3 --topic output
-```
+    ./bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 3 --topic output
 
-Start kafka producer:
+Start Kafka producer:
 
-```
-./bin/kafka-console-producer.sh --broker-list localhost:9092 --topic input
-```
+    ./bin/kafka-console-producer.sh --broker-list localhost:9092 --topic input
 
-Start kafka consumer:
+Start Kafka consumer:
 
-```
-./bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic output
-```
 
-Spark UI
+    ./bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic output
 
-[http://localhost:4040/](http://localhost:4040/)
+
+Publish a few words on input topic using Kafka console producer and check the processing result on output topic using Kafka console producer.
+
+## References
+
+* [Reliable KafkaSink for streaming engines](http://mkuthan.github.io/)
+TODO, my blog post with analysis of streaming frameworks like Apache Flink, Apache Samza, Apache Strom and finally Kafka Streams. 
+How they send processing results to Apache Kafka.
+
+* [spark-kafka-writer](https://github.com/cloudera/spark-kafka-writer)
+Alternative integration library for writing processing results from Apache Spark to Apache Kafka. 
+Unfortunately at the time of this writing, the library used obsolete Scala Kafka producer API and did not send processing results in reliable way.

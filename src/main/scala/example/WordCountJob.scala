@@ -17,7 +17,7 @@
 package example
 
 import org.apache.spark.storage.StorageLevel
-import org.mkuthan.spark.KafkaSink._
+import org.mkuthan.spark.KafkaDStreamSink._
 import org.mkuthan.spark._
 
 import scala.concurrent.duration.FiniteDuration
@@ -60,7 +60,7 @@ class WordCountJob(
       // cache to speed-up processing if action fails
       output.persist(StorageLevel.MEMORY_ONLY_SER)
 
-      output.writeToKafka(config.sinkKafka, config.outputTopic)
+      output.sendToKafka(config.sinkKafka, config.outputTopic)
     }
   }
 

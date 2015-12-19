@@ -16,18 +16,16 @@
 
 package org.mkuthan.spark
 
-import org.apache.spark.streaming.dstream.DStream
+import org.apache.avro.Schema
 
-trait KafkaSink {
-  def writeToKafka(config: Map[String, String], topic: String): Unit
+import scala.util.Try
+
+trait SchemaRepositoryClient extends Serializable {
+  def findSchema(subjectName: String): Try[Schema]
 }
 
-object KafkaSink {
-
-  import scala.language.implicitConversions
-
-  implicit def createKafkaDStreamSink(dstream: DStream[KafkaPayload]): KafkaSink = {
-    new KafkaDStreamSink(dstream)
+class SchemaNotFoundException(subjectName: String) extends RuntimeException {
+  override def getMessage: String = {
+    s"Schema $subjectName not found."
   }
-
 }

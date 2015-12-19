@@ -24,9 +24,9 @@ import org.apache.spark.TaskContext
 import org.apache.spark.streaming.dstream.DStream
 import org.slf4j.LoggerFactory
 
-class KafkaDStreamSink(dstream: DStream[KafkaPayload]) extends KafkaSink {
+class KafkaDStreamSink(dstream: DStream[KafkaPayload]) {
 
-  override def writeToKafka(config: Map[String, String], topic: String): Unit = {
+  def sendToKafka(config: Map[String, String], topic: String): Unit = {
     dstream.foreachRDD { rdd =>
       rdd.foreachPartition { records =>
         val logger = Logger(LoggerFactory.getLogger(classOf[KafkaDStreamSink]))
@@ -57,6 +57,17 @@ class KafkaDStreamSink(dstream: DStream[KafkaPayload]) extends KafkaSink {
     }
   }
 }
+
+object KafkaDStreamSink {
+
+  import scala.language.implicitConversions
+
+  implicit def createKafkaDStreamSink(dstream: DStream[KafkaPayload]): KafkaDStreamSink = {
+    new KafkaDStreamSink(dstream)
+  }
+
+}
+
 
 class ExceptionHandler extends Callback {
 
