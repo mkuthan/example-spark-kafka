@@ -20,10 +20,14 @@ import org.apache.spark.util.ManualClock
 
 import scala.concurrent.duration.FiniteDuration
 
-class ClockWrapper(ssc: StreamingContext) {
+/**
+  * Ugly hack to access Spark private ManualClock class.
+  */
+object ClockWrapper {
 
-  private val manualClock = ssc.scheduler.clock.asInstanceOf[ManualClock]
-
-  def advance(timeToAdd: FiniteDuration) = manualClock.advance(timeToAdd.toMillis)
+  def advance(ssc: StreamingContext, timeToAdd: FiniteDuration): Unit = {
+    val manualClock = ssc.scheduler.clock.asInstanceOf[ManualClock]
+    manualClock.advance(timeToAdd.toMillis)
+  }
 
 }

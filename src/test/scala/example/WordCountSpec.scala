@@ -25,7 +25,8 @@ import org.scalatest.time.{Millis, Span}
 import scala.collection.mutable
 import scala.concurrent.duration._
 
-class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen with Matchers with Eventually with WordCount {
+class WordCountSpec extends FlatSpec with GivenWhenThen with Matchers with Eventually
+with SparkStreamingSpec with WordCount {
 
   val DEFAULT_WINDOW_DURATION = 4.seconds
   val DEFAULT_SLIDE_DURATION = 2.seconds
@@ -46,8 +47,8 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
       DEFAULT_STOP_WORDS,
       DEFAULT_WINDOW_DURATION,
       DEFAULT_SLIDE_DURATION
-    ).foreachRDD{
-      rdd => output += rdd.collect()
+    ).foreachRDD { rdd =>
+      output += rdd.collect()
     }
 
     ssc.start()
@@ -56,7 +57,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     input += sc.makeRDD(Seq("apache"))
 
     Then("words counted after first slide")
-    clock.advance(DEFAULT_SLIDE_DURATION)
+    advanceClock(DEFAULT_SLIDE_DURATION)
     eventually {
       output.last should contain only (
         ("apache", 1))
@@ -66,7 +67,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     input += sc.makeRDD(Seq("apache", "spark"))
 
     Then("words counted after second slide")
-    clock.advance(DEFAULT_SLIDE_DURATION)
+    advanceClock(DEFAULT_SLIDE_DURATION)
     eventually {
       output.last should contain only(
         ("apache", 2),
@@ -76,7 +77,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     When("nothing more queued")
 
     Then("word counted after third slide")
-    clock.advance(DEFAULT_SLIDE_DURATION)
+    advanceClock(DEFAULT_SLIDE_DURATION)
     eventually {
       output.last should contain only(
         ("apache", 1),
@@ -86,7 +87,7 @@ class WordCountSpec extends FlatSpec with SparkStreamingSpec with GivenWhenThen 
     When("nothing more queued")
 
     Then("word counted after fourth slide")
-    clock.advance(DEFAULT_SLIDE_DURATION)
+    advanceClock(DEFAULT_SLIDE_DURATION)
     eventually {
       output.last shouldBe empty
     }

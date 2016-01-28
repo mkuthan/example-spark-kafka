@@ -19,9 +19,9 @@ The example follows Spark convention for integration with external data sinks:
 * Stream processing is blocked (back pressure), if the Kafka producer is too slow.
 * Stream processing results are flushed from Kafka producer internal buffer.
 * Kafka payload decoder abstraction (see [KafkaPayloadCodec](src/main/scala/org/mkuthan/spark/KafkaPayloadCodec.scala)) for encoding and decoding Kafka payload.
-* [StringKafkaPayloadCodec](src/main/scala/org/mkuthan/spark/StringKafkaPayloadCodec.scala) and [AvroKafkaPayloadCodec](src/main/scala/org/mkuthan/spark/AvroKafkaPayloadCodec.scala) provided (but [SchemaRepositoryClient](src/main/scala/org/mkuthan/spark/SchemaRepositoryClient.scala) needs to be implemented).
 * Kafka producer is shared by all tasks on single JVM (see [KafkaProducerFactory](src/main/scala/org/mkuthan/spark/KafkaProducerFactory.scala)).
 * Kafka producer is properly closed when Spark executor is shutdown (see [KafkaProducerFactory](src/main/scala/org/mkuthan/spark/KafkaProducerFactory.scala)).
+* [StringKafkaPayloadCodec](src/main/scala/org/mkuthan/spark/StringKafkaPayloadCodec.scala) and [AvroKafkaPayloadCodec](src/main/scala/org/mkuthan/spark/AvroKafkaPayloadCodec.scala) provided (but [SchemaRepositoryClient](src/main/scala/org/mkuthan/spark/SchemaRepositoryClient.scala) needs to be implemented).
 
 ## Quickstart guide
 
@@ -54,10 +54,6 @@ Start Kafka consumer:
 Publish a few words on input topic using Kafka console producer and check the processing result on output topic using Kafka console producer.
 
 ## References
-
-* [Reliable KafkaSink for streaming engines](http://mkuthan.github.io/)
-TODO, my blog post with analysis of streaming frameworks like Apache Flink, Apache Samza, Apache Strom and finally Kafka Streams. 
-How they send processing results to Apache Kafka.
 
 * [spark-kafka-writer](https://github.com/cloudera/spark-kafka-writer)
 Alternative integration library for writing processing results from Apache Spark to Apache Kafka. 

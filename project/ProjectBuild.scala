@@ -17,11 +17,11 @@
 import sbt.Keys._
 import sbt._
 
-object ApplicationBuild extends Build {
+object ProjectBuild extends Build {
 
   object Versions {
     val kafka = "0.8.2.1"
-    val spark = "1.5.1"
+    val spark = "1.6.0"
   }
 
   val projectName = "example-spark-kafka"

@@ -16,8 +16,6 @@
 
 package org.mkuthan.spark
 
-import java.util.concurrent.Future
-
 import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.producer.{Callback, ProducerRecord, RecordMetadata}
 import org.apache.spark.TaskContext
@@ -29,30 +27,24 @@ class KafkaDStreamSink(dstream: DStream[KafkaPayload]) {
   def sendToKafka(config: Map[String, String], topic: String): Unit = {
     dstream.foreachRDD { rdd =>
       rdd.foreachPartition { records =>
-        val logger = Logger(LoggerFactory.getLogger(classOf[KafkaDStreamSink]))
-
-        val producer = KafkaProducerFactory.getOrCreateProducer(config)
-
-        // ugly hack: https://github.com/apache/spark/pull/5927
+        // ugly hack, see: https://github.com/apache/spark/pull/5927
         val context = TaskContext.get
 
-        val callback = new ExceptionHandler
-        var lastMetadata: Option[Future[RecordMetadata]] = None
+        val logger = Logger(LoggerFactory.getLogger(classOf[KafkaDStreamSink]))
+        val producer = KafkaProducerFactory.getOrCreateProducer(config)
+
+        val callback = new KafkaDStreamSinkExceptionHandler
 
         logger.debug(s"Send Spark partition: ${context.partitionId} to Kafka topic: $topic")
-        records.foreach { record =>
+        val metadata = records.map { record =>
           callback.throwExceptionIfAny()
+          producer.send(new ProducerRecord(topic, record.key.orNull, record.value), callback)
+        }.toList
 
-          val metadata = producer.send(new ProducerRecord(topic, record.key.orNull, record.value), callback)
-          lastMetadata = Some(metadata)
-        }
-
-        // workaround for Kafka 0.8.x
         logger.debug(s"Flush Spark partition: ${context.partitionId} to Kafka topic: $topic")
-        lastMetadata.foreach { metadata => metadata.get() }
+        metadata.foreach { metadata => metadata.get() }
 
-        // available for Kafka 0.9.x
-        // producer.flush()
+        callback.throwExceptionIfAny()
       }
     }
   }
@@ -69,7 +61,7 @@ object KafkaDStreamSink {
 }
 
 
-class ExceptionHandler extends Callback {
+class KafkaDStreamSinkExceptionHandler extends Callback {
 
   import java.util.concurrent.atomic.AtomicReference
 

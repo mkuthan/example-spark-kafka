@@ -5,7 +5,7 @@
     </encoder>
   </appender>
 
-  <logger name="org.mkuthan.spark" level="DEBUG"/>
+  <logger name="org.mkuthan" level="DEBUG"/>
 
   <logger name="kafka" level="WARN"/>
   <logger name="org.apache.kafka" level="WARN"/>
