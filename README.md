@@ -54,7 +54,8 @@ Start Kafka consumer:
 Publish a few words on input topic using Kafka console producer and check the processing result on output topic using Kafka console producer.
 
 ## References
-
+* [Spark and Kafka integration patterns, part 1](http://mkuthan.github.io/blog/2015/08/06/spark-kafka-integration1/)
+* [Spark and Kafka integration patterns, part 2](http://mkuthan.github.io/blog/2016/01/29/spark-kafka-integration2/)
 * [spark-kafka-writer](https://github.com/cloudera/spark-kafka-writer)
 Alternative integration library for writing processing results from Apache Spark to Apache Kafka. 
 Unfortunately at the time of this writing, the library used obsolete Scala Kafka producer API and did not send processing results in reliable way.
