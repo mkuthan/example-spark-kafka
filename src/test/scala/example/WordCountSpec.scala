@@ -34,7 +34,7 @@ with SparkStreamingSpec with WordCount {
 
   // default timeout for eventually trait
   implicit override val patienceConfig =
-    PatienceConfig(timeout = scaled(Span(1500, Millis)))
+    PatienceConfig(timeout = scaled(Span(5000, Millis)))
 
   "Sample set" should "be counted over sliding window" in {
     Given("streaming context is initialized")
