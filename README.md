@@ -17,13 +17,14 @@ The example follows Spark convention for integration with external data sinks:
 * [KafkaDStreamSink](src/main/scala/org/mkuthan/spark/KafkaDStreamSink.scala) for sending streaming results to Apache Kafka in reliable way.
 * Stream processing fail fast, if the results could not be send to Apache Kafka.
 * Stream processing is blocked (back pressure), if the Kafka producer is too slow.
-* Stream processing results are flushed from Kafka producer internal buffer.
-* Kafka payload decoder abstraction (see [KafkaPayloadCodec](src/main/scala/org/mkuthan/spark/KafkaPayloadCodec.scala)) for encoding and decoding Kafka payload.
+* Stream processing results are flushed explicitly from Kafka producer internal buffer.
 * Kafka producer is shared by all tasks on single JVM (see [KafkaProducerFactory](src/main/scala/org/mkuthan/spark/KafkaProducerFactory.scala)).
 * Kafka producer is properly closed when Spark executor is shutdown (see [KafkaProducerFactory](src/main/scala/org/mkuthan/spark/KafkaProducerFactory.scala)).
-* [StringKafkaPayloadCodec](src/main/scala/org/mkuthan/spark/StringKafkaPayloadCodec.scala) and [AvroKafkaPayloadCodec](src/main/scala/org/mkuthan/spark/AvroKafkaPayloadCodec.scala) provided (but [SchemaRepositoryClient](src/main/scala/org/mkuthan/spark/SchemaRepositoryClient.scala) needs to be implemented).
+* [Twitter Bijection](https://github.com/twitter/bijection) is used for encoding/decoding [KafkaPayload](src/main/scala/org/mkuthan/spark/KafkaPayload.scala).
 
 ## Quickstart guide
+
+Download latest Apache Kafka [distribution](http://kafka.apache.org/downloads.html) and un-tar it. 
 
 Start ZooKeeper server:
 
@@ -47,13 +48,16 @@ Start Kafka producer:
 
 Start Kafka consumer:
 
-
     ./bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic output
 
+Run example application:
+
+    ./sbt "run-main example.WordCountJob"
 
 Publish a few words on input topic using Kafka console producer and check the processing result on output topic using Kafka console producer.
 
 ## References
+
 * [Spark and Kafka integration patterns, part 1](http://mkuthan.github.io/blog/2015/08/06/spark-kafka-integration1/)
 * [Spark and Kafka integration patterns, part 2](http://mkuthan.github.io/blog/2016/01/29/spark-kafka-integration2/)
 * [spark-kafka-writer](https://github.com/cloudera/spark-kafka-writer)

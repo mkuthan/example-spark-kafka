@@ -57,6 +57,9 @@ object ProjectBuild extends Build {
     "org.apache.spark" %% "spark-streaming" % Versions.spark,
     "org.apache.spark" %% "spark-streaming-kafka" % Versions.spark,
 
+    "com.twitter" %% "bijection-core" % "0.8.1",
+    "com.twitter" %% "bijection-avro" % "0.8.1",
+
     "com.typesafe" % "config" % "1.2.1",
     "net.ceedubs" %% "ficus" % "1.1.1",
 

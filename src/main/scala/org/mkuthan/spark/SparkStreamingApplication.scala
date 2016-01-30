@@ -39,7 +39,4 @@ trait SparkStreamingApplication extends SparkApplication {
 
 }
 
-case class SparkStreamingApplicationConfig(
-                                            batchDuration: FiniteDuration,
-                                            checkpoint: String)
-  extends Serializable
+case class SparkStreamingApplicationConfig(batchDuration: FiniteDuration, checkpoint: String) extends Serializable

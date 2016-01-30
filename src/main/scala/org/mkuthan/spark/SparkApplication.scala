@@ -20,21 +20,16 @@ import org.apache.spark.{SparkConf, SparkContext}
 
 trait SparkApplication {
 
-  def sparkConfig: SparkApplicationConfig
+  def sparkConfig: Map[String, String]
 
   def withSparkContext(f: SparkContext => Unit): Unit = {
-    val sparkConf = new SparkConf()
-      .setMaster(sparkConfig.master)
-      .setAppName(sparkConfig.appName)
+    val conf = new SparkConf()
 
-    val sc = new SparkContext(sparkConf)
+    sparkConfig.foreach { case (k, v) => conf.setIfMissing(k, v) }
+
+    val sc = new SparkContext(conf)
 
     f(sc)
   }
 
 }
-
-case class SparkApplicationConfig(master: String,
-                                  appName: String)
-  extends Serializable
-

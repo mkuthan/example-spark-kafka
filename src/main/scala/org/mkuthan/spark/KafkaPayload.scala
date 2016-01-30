@@ -17,5 +17,3 @@
 package org.mkuthan.spark
 
 case class KafkaPayload(key: Option[Array[Byte]], value: Array[Byte])
-
-

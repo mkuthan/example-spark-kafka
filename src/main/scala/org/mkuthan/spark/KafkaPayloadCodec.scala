@@ -16,12 +16,32 @@
 
 package org.mkuthan.spark
 
+import com.twitter.bijection.Injection
+import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.rdd.RDD
+
 import scala.util.Try
 
-trait KafkaPayloadCodec[K, V] extends Serializable {
+trait KafkaPayloadCodec {
 
-  def decode(payload: KafkaPayload): Try[(Option[K], V)]
+  def decodeValue[A](injectionBc: Broadcast[Injection[A, Array[Byte]]]): RDD[KafkaPayload] => RDD[Try[A]] = {
+    (rdd: RDD[KafkaPayload]) => {
+      rdd.map { payload =>
+        implicit val injection = injectionBc.value
+        Injection.invert[A, Array[Byte]](payload.value)
+      }
+    }
+  }
 
-  def encode(kv: (Option[K], V)): Try[KafkaPayload]
+  def encodeValue[A](injectionBc: Broadcast[Injection[A, Array[Byte]]]): RDD[A] => RDD[KafkaPayload] = {
+    (rdd: RDD[A]) => {
+      implicit val injection = injectionBc.value
+      rdd.map { v =>
+        Injection[A, Array[Byte]](v)
+      }.map { v =>
+        KafkaPayload(None, v)
+      }
+    }
+  }
 
 }

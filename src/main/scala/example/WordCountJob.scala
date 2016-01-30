@@ -16,19 +16,17 @@
 
 package example
 
+import com.twitter.bijection.StringCodec
 import org.apache.spark.storage.StorageLevel
-import org.mkuthan.spark.KafkaDStreamSink._
 import org.mkuthan.spark._
 
 import scala.concurrent.duration.FiniteDuration
 
-class WordCountJob(
-                    config: WordCountJobConfig,
-                    source: KafkaDStreamSource,
-                    codec: StringKafkaPayloadCodec)
-  extends SparkStreamingApplication with WordCount {
+class WordCountJob(config: WordCountJobConfig,
+                   source: KafkaDStreamSource)
+  extends SparkStreamingApplication with WordCount with KafkaPayloadCodec {
 
-  override def sparkConfig: SparkApplicationConfig = config.spark
+  override def sparkConfig: Map[String, String] = config.spark
 
   override def sparkStreamingConfig: SparkStreamingApplicationConfig = config.sparkStreaming
 
@@ -36,13 +34,19 @@ class WordCountJob(
     withSparkStreamingContext { (sc, ssc) =>
       val input = source.createSource(ssc, config.inputTopic)
 
-      val codecVar = sc.broadcast(codec)
+      // Option 1: Array[Byte] -> String
+      val valueInjection = sc.broadcast(StringCodec.utf8)
 
-      // decode Kafka payload (e.g: from Avro)
+      // Option 2: Array[Byte] -> Specific Avro
+      // val valueInjection = sc.broadcast(SpecificAvroCodecs[SomeAvroType])
+
+      // Option 3: Array[Byte] -> Generic Avro
+      // val valueInjection = sc.broadcast(GenericAvroCodecs[GenericRecord](someAvroSchema))
+
+      // decode Kafka Payload (e.g: from String or Avro)
       val lines = input
-        .map(codecVar.value.decode(_))
-        .flatMap(_.toOption) // only decoded payloads
-        .map(_._2) // only value
+        .transform(decodeValue(valueInjection))
+        .flatMap(_.toOption)
 
       val countedWords = countWords(
         ssc,
@@ -52,14 +56,15 @@ class WordCountJob(
         config.slideDuration
       )
 
-      // encode Kafka payload (e.g: to Avro)
+      // encode Kafka payload (e.g: to String or Avro)
       val output = countedWords
-        .map(countedWord => codecVar.value.encode((None, countedWord.toString)))
-        .flatMap(_.toOption) // only encoded payloads
+        .map(_.toString())
+        .transform(encodeValue(valueInjection))
 
       // cache to speed-up processing if action fails
       output.persist(StorageLevel.MEMORY_ONLY_SER)
 
+      import org.mkuthan.spark.KafkaDStreamSink._
       output.sendToKafka(config.sinkKafka, config.outputTopic)
     }
   }
@@ -73,9 +78,7 @@ object WordCountJob {
 
     val source = KafkaDStreamSource(config.sourceKafka)
 
-    val codec = StringKafkaPayloadCodec(config.stringCodec)
-
-    val streamingJob = new WordCountJob(config, source, codec)
+    val streamingJob = new WordCountJob(config, source)
     streamingJob.start()
   }
 
@@ -87,9 +90,8 @@ case class WordCountJobConfig(
                                stopWords: Set[String],
                                windowDuration: FiniteDuration,
                                slideDuration: FiniteDuration,
-                               spark: SparkApplicationConfig,
+                               spark: Map[String, String],
                                sparkStreaming: SparkStreamingApplicationConfig,
-                               stringCodec: StringKafkaPayloadCodecConfig,
                                sourceKafka: Map[String, String],
                                sinkKafka: Map[String, String])
   extends Serializable
@@ -112,13 +114,11 @@ object WordCountJobConfig {
       config.as[Set[String]]("stopWords"),
       config.as[FiniteDuration]("windowDuration"),
       config.as[FiniteDuration]("slideDuration"),
-      config.as[SparkApplicationConfig]("spark"),
+      config.as[Map[String, String]]("spark"),
       config.as[SparkStreamingApplicationConfig]("sparkStreaming"),
-      config.as[StringKafkaPayloadCodecConfig]("stringCodec"),
       config.as[Map[String, String]]("kafkaSource"),
       config.as[Map[String, String]]("kafkaSink")
     )
   }
 
 }
-
