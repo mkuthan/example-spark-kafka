@@ -23,7 +23,7 @@ import org.apache.spark.streaming.{Duration, StreamingContext}
 
 import scala.concurrent.duration.FiniteDuration
 
-trait WordCount {
+object WordCount {
 
   type WordCount = (String, Int)
 

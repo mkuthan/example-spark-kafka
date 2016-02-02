@@ -25,8 +25,7 @@ import org.scalatest.time.{Millis, Span}
 import scala.collection.mutable
 import scala.concurrent.duration._
 
-class WordCountSpec extends FlatSpec with GivenWhenThen with Matchers with Eventually
-with SparkStreamingSpec with WordCount {
+class WordCountSpec extends FlatSpec with GivenWhenThen with Matchers with Eventually with SparkStreamingSpec {
 
   val DEFAULT_WINDOW_DURATION = 4.seconds
   val DEFAULT_SLIDE_DURATION = 2.seconds
@@ -35,6 +34,8 @@ with SparkStreamingSpec with WordCount {
   // default timeout for eventually trait
   implicit override val patienceConfig =
     PatienceConfig(timeout = scaled(Span(5000, Millis)))
+
+  import example.WordCount._
 
   "Sample set" should "be counted over sliding window" in {
     Given("streaming context is initialized")

@@ -23,12 +23,14 @@ import scala.concurrent.duration.FiniteDuration
 
 trait SparkStreamingApplication extends SparkApplication {
 
-  def sparkStreamingConfig: SparkStreamingApplicationConfig
+  def streamingBatchDuration: FiniteDuration
+
+  def streamingCheckpointDir: String
 
   def withSparkStreamingContext(f: (SparkContext, StreamingContext) => Unit): Unit = {
     withSparkContext { sc =>
-      val ssc = new StreamingContext(sc, Seconds(sparkStreamingConfig.batchDuration.toSeconds))
-      ssc.checkpoint(sparkStreamingConfig.checkpoint)
+      val ssc = new StreamingContext(sc, Seconds(streamingBatchDuration.toSeconds))
+      ssc.checkpoint(streamingCheckpointDir)
 
       f(sc, ssc)
 
@@ -38,5 +40,3 @@ trait SparkStreamingApplication extends SparkApplication {
   }
 
 }
-
-case class SparkStreamingApplicationConfig(batchDuration: FiniteDuration, checkpoint: String) extends Serializable

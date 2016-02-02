@@ -16,22 +16,21 @@
 
 package org.mkuthan.spark
 
-import com.typesafe.scalalogging.Logger
 import org.apache.kafka.clients.producer.{Callback, ProducerRecord, RecordMetadata}
+import org.apache.log4j.Logger
 import org.apache.spark.TaskContext
 import org.apache.spark.streaming.dstream.DStream
-import org.slf4j.LoggerFactory
 
 class KafkaDStreamSink(dstream: DStream[KafkaPayload]) {
 
   def sendToKafka(config: Map[String, String], topic: String): Unit = {
     dstream.foreachRDD { rdd =>
       rdd.foreachPartition { records =>
+        val producer = KafkaProducerFactory.getOrCreateProducer(config)
+
         // ugly hack, see: https://github.com/apache/spark/pull/5927
         val context = TaskContext.get
-
-        val logger = Logger(LoggerFactory.getLogger(classOf[KafkaDStreamSink]))
-        val producer = KafkaProducerFactory.getOrCreateProducer(config)
+        val logger = Logger.getLogger(getClass)
 
         val callback = new KafkaDStreamSinkExceptionHandler
 

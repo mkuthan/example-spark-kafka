@@ -20,7 +20,7 @@ The example follows Spark convention for integration with external data sinks:
 * Stream processing results are flushed explicitly from Kafka producer internal buffer.
 * Kafka producer is shared by all tasks on single JVM (see [KafkaProducerFactory](src/main/scala/org/mkuthan/spark/KafkaProducerFactory.scala)).
 * Kafka producer is properly closed when Spark executor is shutdown (see [KafkaProducerFactory](src/main/scala/org/mkuthan/spark/KafkaProducerFactory.scala)).
-* [Twitter Bijection](https://github.com/twitter/bijection) is used for encoding/decoding [KafkaPayload](src/main/scala/org/mkuthan/spark/KafkaPayload.scala).
+* [Twitter Bijection](https://github.com/twitter/bijection) is used for encoding/decoding [KafkaPayload](src/main/scala/org/mkuthan/spark/KafkaPayload.scala) from/into String or Avro.
 
 ## Quickstart guide
 

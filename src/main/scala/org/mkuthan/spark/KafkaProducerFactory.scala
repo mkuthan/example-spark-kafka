@@ -16,14 +16,16 @@
 
 package org.mkuthan.spark
 
-import com.typesafe.scalalogging.LazyLogging
 import org.apache.kafka.clients.producer.KafkaProducer
+import org.apache.log4j.Logger
 
 import scala.collection.mutable
 
-object KafkaProducerFactory extends LazyLogging {
+object KafkaProducerFactory {
 
   import scala.collection.JavaConversions._
+
+  private val logger = Logger.getLogger(getClass)
 
   private val producers = mutable.Map[Map[String, String], KafkaProducer[Array[Byte], Array[Byte]]]()
 

@@ -57,15 +57,13 @@ object ProjectBuild extends Build {
     "org.apache.spark" %% "spark-streaming" % Versions.spark,
     "org.apache.spark" %% "spark-streaming-kafka" % Versions.spark,
 
-    "com.twitter" %% "bijection-core" % "0.8.1",
     "com.twitter" %% "bijection-avro" % "0.8.1",
+    "com.twitter" %% "chill-avro" % "0.7.2",
 
     "com.typesafe" % "config" % "1.2.1",
     "net.ceedubs" %% "ficus" % "1.1.1",
 
-    "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
-    "org.slf4j" % "slf4j-api" % "1.7.10",
-    "ch.qos.logback" % "logback-classic" % "1.1.2",
+    "ch.qos.logback" % "logback-classic" % "0.9.24",
 
     "org.scalatest" %% "scalatest" % "2.2.4" % "test"
   )
