@@ -16,6 +16,7 @@
 
 package example
 
+import example.WordCount._
 import org.apache.spark.rdd.RDD
 import org.mkuthan.spark.SparkStreamingSpec
 import org.scalatest._
@@ -25,40 +26,51 @@ import org.scalatest.time.{Millis, Span}
 import scala.collection.mutable
 import scala.concurrent.duration._
 
+object WordCountSpec {
+  val windowDuration = 4.seconds
+  val slideDuration = 2.seconds
+  val stopWords = Set("the", "an", "a")
+
+  val input = mutable.Queue[RDD[String]]()
+  val output = mutable.ArrayBuffer.empty[Array[WordCount]]
+}
+
 class WordCountSpec extends FlatSpec with GivenWhenThen with Matchers with Eventually with SparkStreamingSpec {
 
-  val DEFAULT_WINDOW_DURATION = 4.seconds
-  val DEFAULT_SLIDE_DURATION = 2.seconds
-  val DEFAULT_STOP_WORDS = Set.empty[String]
+  import WordCountSpec._
 
   // default timeout for eventually trait
   implicit override val patienceConfig =
     PatienceConfig(timeout = scaled(Span(5000, Millis)))
 
-  import example.WordCount._
+  override def beforeAll(): Unit = {
+    super.beforeAll()
 
-  "Sample set" should "be counted over sliding window" in {
-    Given("streaming context is initialized")
-    val input = mutable.Queue[RDD[String]]()
-    val output = mutable.ArrayBuffer.empty[Array[WordCount]]
-
-    countWords(
+    WordCount.countWords(
       ssc,
       ssc.queueStream(input),
-      DEFAULT_STOP_WORDS,
-      DEFAULT_WINDOW_DURATION,
-      DEFAULT_SLIDE_DURATION
+      stopWords,
+      windowDuration,
+      slideDuration
     ).foreachRDD { rdd =>
       output += rdd.collect()
     }
 
     ssc.start()
+  }
 
+  override def sparkConfig: Map[String, String] = {
+    super.sparkConfig +
+      ("spark.serializer" -> "org.apache.spark.serializer.KryoSerializer") +
+      ("spark.kryo.registrator" -> "example.WordCountKryoRegistration")
+  }
+
+  "Apache Spark set" should "be counted over sliding window" in {
     When("first set of words queued")
     input += sc.makeRDD(Seq("apache"))
 
     Then("words counted after first slide")
-    advanceClock(DEFAULT_SLIDE_DURATION)
+    advanceClock(slideDuration)
     eventually {
       output.last should contain only (
         ("apache", 1))
@@ -68,7 +80,7 @@ class WordCountSpec extends FlatSpec with GivenWhenThen with Matchers with Event
     input += sc.makeRDD(Seq("apache", "spark"))
 
     Then("words counted after second slide")
-    advanceClock(DEFAULT_SLIDE_DURATION)
+    advanceClock(slideDuration)
     eventually {
       output.last should contain only(
         ("apache", 2),
@@ -78,7 +90,7 @@ class WordCountSpec extends FlatSpec with GivenWhenThen with Matchers with Event
     When("nothing more queued")
 
     Then("word counted after third slide")
-    advanceClock(DEFAULT_SLIDE_DURATION)
+    advanceClock(slideDuration)
     eventually {
       output.last should contain only(
         ("apache", 1),
@@ -88,12 +100,56 @@ class WordCountSpec extends FlatSpec with GivenWhenThen with Matchers with Event
     When("nothing more queued")
 
     Then("word counted after fourth slide")
-    advanceClock(DEFAULT_SLIDE_DURATION)
+    advanceClock(slideDuration)
     eventually {
       output.last shouldBe empty
     }
+  }
 
-    //ssc.awaitTermination()
+  "The most famous Hamlet quote" should "be counted over sliding window" in {
+    input += sc.makeRDD(Seq("To be"))
+    advanceClock(slideDuration)
+    eventually {
+      output.last should contain only(
+        ("be", 1),
+        ("to", 1))
+    }
+
+    input += sc.makeRDD(Seq("or not to be,"))
+    advanceClock(slideDuration)
+    eventually {
+      output.last should contain only(
+        ("be", 2),
+        ("not", 1),
+        ("or", 1),
+        ("to", 2))
+    }
+
+    input += sc.makeRDD(Seq(" that is the question"))
+    advanceClock(slideDuration)
+    eventually {
+      output.last should contain only(
+        ("be", 1),
+        ("is", 1),
+        ("not", 1),
+        ("or", 1),
+        ("question", 1),
+        ("that", 1),
+        ("to", 1))
+    }
+
+    advanceClock(slideDuration)
+    eventually {
+      output.last should contain only(
+        ("is", 1),
+        ("question", 1),
+        ("that", 1))
+    }
+
+    advanceClock(slideDuration)
+    eventually {
+      output.last shouldBe empty
+    }
   }
 
   "Line" should "be split into words" in {
