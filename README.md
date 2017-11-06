@@ -15,7 +15,7 @@ The example follows Spark convention for integration with external data sinks:
 ## Features
 
 * [KafkaDStreamSink](src/main/scala/org/mkuthan/spark/KafkaDStreamSink.scala) for sending streaming results to Apache Kafka in reliable way.
-* Stream processing fail fast, if the results could not be send to Apache Kafka.
+* Stream processing fail fast, if the results could not be sent to Apache Kafka.
 * Stream processing is blocked (back pressure), if the Kafka producer is too slow.
 * Stream processing results are flushed explicitly from Kafka producer internal buffer.
 * Kafka producer is shared by all tasks on single JVM (see [KafkaProducerFactory](src/main/scala/org/mkuthan/spark/KafkaProducerFactory.scala)).
