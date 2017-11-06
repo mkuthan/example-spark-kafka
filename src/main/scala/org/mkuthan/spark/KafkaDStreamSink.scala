@@ -66,7 +66,8 @@ class KafkaDStreamSinkExceptionHandler extends Callback {
 
   private val lastException = new AtomicReference[Option[Exception]](None)
 
-  override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit = lastException.set(Option(exception))
+  override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit =
+    Option(exception).foreach{ ex => lastException.set(Some(ex))}
 
   def throwExceptionIfAny(): Unit = lastException.getAndSet(None).foreach(ex => throw ex)
 
