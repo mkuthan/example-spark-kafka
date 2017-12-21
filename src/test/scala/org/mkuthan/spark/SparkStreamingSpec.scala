@@ -16,10 +16,10 @@
 
 package org.mkuthan.spark
 
+import scala.concurrent.duration.FiniteDuration
+
 import org.apache.spark.streaming._
 import org.scalatest._
-
-import scala.concurrent.duration.FiniteDuration
 
 trait SparkStreamingSpec extends SparkSpec {
   this: Suite =>
@@ -29,13 +29,13 @@ trait SparkStreamingSpec extends SparkSpec {
 
   import ClockWrapper._
 
-  private var _ssc: StreamingContext = _
+  private var sscVar: StreamingContext = _ // scalastyle:ignore var.field
 
   override def beforeAll(): Unit = {
     super.beforeAll()
 
-    _ssc = new StreamingContext(sc, batchDuration)
-    _ssc.checkpoint(checkpointDir)
+    sscVar = new StreamingContext(sc, batchDuration)
+    sscVar.checkpoint(checkpointDir)
   }
 
   def batchDuration: Duration = Seconds(1)
@@ -43,9 +43,9 @@ trait SparkStreamingSpec extends SparkSpec {
   def checkpointDir: String = Files.createTempDirectory(this.getClass.getSimpleName).toUri.toString
 
   override def afterAll(): Unit = {
-    if (_ssc != null) {
-      _ssc.stop(stopSparkContext = false, stopGracefully = false)
-      _ssc = null
+    if (sscVar != null) {
+      sscVar.stop(stopSparkContext = false, stopGracefully = false)
+      sscVar = null // scalastyle:ignore null
     }
 
     super.afterAll()
@@ -55,14 +55,14 @@ trait SparkStreamingSpec extends SparkSpec {
     super.sparkConfig + ("spark.streaming.clock" -> "org.apache.spark.streaming.util.ManualClock")
   }
 
-  def ssc: StreamingContext = _ssc
+  def ssc: StreamingContext = sscVar
 
   def advanceClock(timeToAdd: FiniteDuration): Unit = {
-    advance(_ssc, timeToAdd)
+    advance(sscVar, timeToAdd)
   }
 
   def advanceClockOneBatch(): Unit = {
-    advance(_ssc, FiniteDuration(batchDuration.milliseconds, TimeUnit.MILLISECONDS))
+    advance(sscVar, FiniteDuration(batchDuration.milliseconds, TimeUnit.MILLISECONDS))
   }
 
 }

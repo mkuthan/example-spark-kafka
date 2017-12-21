@@ -16,23 +16,25 @@
 
 package example
 
+import scala.concurrent.duration.FiniteDuration
+
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
+import org.apache.spark.streaming.Duration
+import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
-import org.apache.spark.streaming.{Duration, StreamingContext}
-
-import scala.concurrent.duration.FiniteDuration
 
 object WordCount {
 
   type WordCount = (String, Int)
 
   def countWords(
-                  ssc: StreamingContext,
-                  lines: DStream[String],
-                  stopWords: Set[String],
-                  windowDuration: FiniteDuration,
-                  slideDuration: FiniteDuration): DStream[WordCount] = {
+      ssc: StreamingContext,
+      lines: DStream[String],
+      stopWords: Set[String],
+      windowDuration: FiniteDuration,
+      slideDuration: FiniteDuration
+  ): DStream[WordCount] = {
 
     import scala.language.implicitConversions
     implicit def finiteDurationToSparkDuration(value: FiniteDuration): Duration = new Duration(value.toMillis)
@@ -58,17 +60,22 @@ object WordCount {
       .transform(sortWordCounts)
   }
 
-  val toLowerCase = (words: RDD[String]) => words.map(word => word.toLowerCase)
+  def toLowerCase: RDD[String] => RDD[String] =
+    (words: RDD[String]) => words.map(word => word.toLowerCase)
 
-  val splitLine = (lines: RDD[String]) => lines.flatMap(line => line.split("[^\\p{L}]"))
+  def splitLine: RDD[String] => RDD[String] =
+    (lines: RDD[String]) => lines.flatMap(line => line.split("[^\\p{L}]"))
 
-  val skipEmptyWords = (words: RDD[String]) => words.filter(word => !word.isEmpty)
+  def skipEmptyWords: RDD[String] => RDD[String] =
+    (words: RDD[String]) => words.filter(word => !word.isEmpty)
 
-  val skipStopWords = (stopWords: Broadcast[Set[String]]) => (words: RDD[String]) =>
-    words.filter(word => !stopWords.value.contains(word))
+  def skipStopWords: Broadcast[Set[String]] => RDD[String] => RDD[String] =
+    (stopWords: Broadcast[Set[String]]) => (words: RDD[String]) => words.filter(word => !stopWords.value.contains(word))
 
-  val skipEmptyWordCounts = (wordCounts: RDD[WordCount]) => wordCounts.filter(wordCount => wordCount._2 > 0)
+  def skipEmptyWordCounts: RDD[(String, Int)] => RDD[(String, Int)] =
+    (wordCounts: RDD[WordCount]) => wordCounts.filter(wordCount => wordCount._2 > 0)
 
-  val sortWordCounts = (wordCounts: RDD[WordCount]) => wordCounts.sortByKey()
+  def sortWordCounts: RDD[(String, Int)] => RDD[(String, Int)] =
+    (wordCounts: RDD[WordCount]) => wordCounts.sortByKey()
 
 }

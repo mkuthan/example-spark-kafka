@@ -16,10 +16,11 @@
 
 package org.mkuthan.spark
 
-import org.apache.spark.SparkContext
-import org.apache.spark.streaming.{Seconds, StreamingContext}
-
 import scala.concurrent.duration.FiniteDuration
+
+import org.apache.spark.SparkContext
+import org.apache.spark.streaming.Seconds
+import org.apache.spark.streaming.StreamingContext
 
 trait SparkStreamingApplication extends SparkApplication {
 

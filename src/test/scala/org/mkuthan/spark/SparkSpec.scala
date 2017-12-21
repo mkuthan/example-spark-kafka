@@ -22,7 +22,7 @@ import org.scalatest._
 trait SparkSpec extends BeforeAndAfterAll {
   this: Suite =>
 
-  private var _sc: SparkContext = _
+  private var scVar: SparkContext = _ // scalastyle:ignore var.field
 
   override def beforeAll(): Unit = {
     super.beforeAll()
@@ -33,19 +33,19 @@ trait SparkSpec extends BeforeAndAfterAll {
 
     sparkConfig.foreach { case (k, v) => conf.setIfMissing(k, v) }
 
-    _sc = new SparkContext(conf)
+    scVar = new SparkContext(conf)
   }
 
   def sparkConfig: Map[String, String] = Map.empty
 
   override def afterAll(): Unit = {
-    if (_sc != null) {
-      _sc.stop()
-      _sc = null
+    if (scVar != null) {
+      scVar.stop()
+      scVar = null // scalastyle:ignore null
     }
     super.afterAll()
   }
 
-  def sc: SparkContext = _sc
+  def sc: SparkContext = scVar
 
 }

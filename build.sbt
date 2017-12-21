@@ -59,7 +59,6 @@ lazy val customLibraryDependencies = Seq(
 )
 
 lazy val customJavaOptions = Seq(
-  "-Xms1024m",
   "-Xmx1024m",
   "-XX:-MaxFDLimit"
 )

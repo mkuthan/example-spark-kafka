@@ -16,13 +16,13 @@
 
 package org.apache.spark.streaming
 
-import org.apache.spark.util.ManualClock
-
 import scala.concurrent.duration.FiniteDuration
 
+import org.apache.spark.util.ManualClock
+
 /**
-  * Ugly hack to access Spark private ManualClock class.
-  */
+ * Ugly hack to access Spark private ManualClock class.
+ */
 object ClockWrapper {
 
   def advance(ssc: StreamingContext, timeToAdd: FiniteDuration): Unit = {

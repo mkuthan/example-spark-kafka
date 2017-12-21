@@ -16,10 +16,12 @@
 
 package org.mkuthan.spark
 
-import com.twitter.bijection.{Injection, StringCodec}
-import org.apache.log4j.Logger
+import scala.util.Failure
+import scala.util.Success
 
-import scala.util.{Failure, Success}
+import com.twitter.bijection.Injection
+import com.twitter.bijection.StringCodec
+import org.apache.log4j.Logger
 
 class KafkaPayloadStringCodec extends Serializable {
 
@@ -43,7 +45,6 @@ class KafkaPayloadStringCodec extends Serializable {
   }
 
 }
-
 
 object KafkaPayloadStringCodec {
   def apply(): KafkaPayloadStringCodec = new KafkaPayloadStringCodec

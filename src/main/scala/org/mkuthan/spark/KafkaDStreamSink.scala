@@ -16,7 +16,9 @@
 
 package org.mkuthan.spark
 
-import org.apache.kafka.clients.producer.{Callback, ProducerRecord, RecordMetadata}
+import org.apache.kafka.clients.producer.Callback
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.clients.producer.RecordMetadata
 import org.apache.log4j.Logger
 import org.apache.spark.TaskContext
 import org.apache.spark.streaming.dstream.DStream
@@ -59,7 +61,6 @@ object KafkaDStreamSink {
 
 }
 
-
 class KafkaDStreamSinkExceptionHandler extends Callback {
 
   import java.util.concurrent.atomic.AtomicReference
@@ -67,10 +68,8 @@ class KafkaDStreamSinkExceptionHandler extends Callback {
   private val lastException = new AtomicReference[Option[Exception]](None)
 
   override def onCompletion(metadata: RecordMetadata, exception: Exception): Unit =
-    Option(exception).foreach{ ex => lastException.set(Some(ex))}
+    Option(exception).foreach { ex => lastException.set(Some(ex)) }
 
   def throwExceptionIfAny(): Unit = lastException.getAndSet(None).foreach(ex => throw ex)
 
 }
-
-

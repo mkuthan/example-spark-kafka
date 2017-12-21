@@ -16,10 +16,10 @@
 
 package example
 
+import scala.concurrent.duration.FiniteDuration
+
 import org.apache.spark.storage.StorageLevel
 import org.mkuthan.spark._
-
-import scala.concurrent.duration.FiniteDuration
 
 class WordCountJob(config: WordCountJobConfig, source: KafkaDStreamSource) extends SparkStreamingApplication {
 
@@ -38,8 +38,8 @@ class WordCountJob(config: WordCountJobConfig, source: KafkaDStreamSource) exten
       val lines = input.flatMap(stringCodec.value.decodeValue(_))
 
       // Option 2: Array[Byte] -> Specific Avro
-      //val avroSpecificCodec = sc.broadcast(KafkaPayloadAvroSpecificCodec[SomeAvroType]())
-      //val lines = input.flatMap(avroSpecificCodec.value.decodeValue(_))
+      // val avroSpecificCodec = sc.broadcast(KafkaPayloadAvroSpecificCodec[SomeAvroType]())
+      // val lines = input.flatMap(avroSpecificCodec.value.decodeValue(_))
 
       val countedWords = WordCount.countWords(
         ssc,
@@ -76,23 +76,23 @@ object WordCountJob {
 }
 
 case class WordCountJobConfig(
-                               inputTopic: String,
-                               outputTopic: String,
-                               stopWords: Set[String],
-                               windowDuration: FiniteDuration,
-                               slideDuration: FiniteDuration,
-                               spark: Map[String, String],
-                               streamingBatchDuration: FiniteDuration,
-                               streamingCheckpointDir: String,
-                               sourceKafka: Map[String, String],
-                               sinkKafka: Map[String, String])
-  extends Serializable
+    inputTopic: String,
+    outputTopic: String,
+    stopWords: Set[String],
+    windowDuration: FiniteDuration,
+    slideDuration: FiniteDuration,
+    spark: Map[String, String],
+    streamingBatchDuration: FiniteDuration,
+    streamingCheckpointDir: String,
+    sourceKafka: Map[String, String],
+    sinkKafka: Map[String, String]
+) extends Serializable
 
 object WordCountJobConfig {
 
-  import com.typesafe.config.{Config, ConfigFactory}
+  import com.typesafe.config.Config
+  import com.typesafe.config.ConfigFactory
   import net.ceedubs.ficus.Ficus._
-  import net.ceedubs.ficus.readers.ArbitraryTypeReader.arbitraryTypeValueReader
 
   def apply(): WordCountJobConfig = apply(ConfigFactory.load)
 

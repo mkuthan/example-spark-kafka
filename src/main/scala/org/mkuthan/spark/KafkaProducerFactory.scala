@@ -16,20 +16,20 @@
 
 package org.mkuthan.spark
 
+import scala.collection.mutable
+
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.log4j.Logger
 
-import scala.collection.mutable
-
 object KafkaProducerFactory {
 
-  import scala.collection.JavaConversions._
+  import scala.collection.JavaConverters._
 
-  private val logger = Logger.getLogger(getClass)
+  private val Log = Logger.getLogger(getClass)
 
-  private val producers = mutable.Map[Map[String, String], KafkaProducer[Array[Byte], Array[Byte]]]()
+  private val Producers = mutable.Map[Map[String, Object], KafkaProducer[Array[Byte], Array[Byte]]]()
 
-  def getOrCreateProducer(config: Map[String, String]): KafkaProducer[Array[Byte], Array[Byte]] = {
+  def getOrCreateProducer(config: Map[String, Object]): KafkaProducer[Array[Byte], Array[Byte]] = {
 
     val defaultConfig = Map(
       "key.serializer" -> "org.apache.kafka.common.serialization.ByteArraySerializer",
@@ -38,17 +38,18 @@ object KafkaProducerFactory {
 
     val finalConfig = defaultConfig ++ config
 
-    producers.getOrElseUpdate(finalConfig, {
-      logger.info(s"Create Kafka producer , config: $finalConfig")
-      val producer = new KafkaProducer[Array[Byte], Array[Byte]](finalConfig)
+    Producers.getOrElseUpdate(
+      finalConfig, {
+        Log.info(s"Create Kafka producer , config: $finalConfig")
+        val producer = new KafkaProducer[Array[Byte], Array[Byte]](finalConfig.asJava)
 
-      sys.addShutdownHook {
-        logger.info(s"Close Kafka producer, config: $finalConfig")
-        producer.close()
-      }
+        sys.addShutdownHook {
+          Log.info(s"Close Kafka producer, config: $finalConfig")
+          producer.close()
+        }
 
-      producer
-    })
+        producer
+      })
   }
 }
 

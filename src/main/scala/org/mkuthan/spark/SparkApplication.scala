@@ -16,7 +16,8 @@
 
 package org.mkuthan.spark
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
 
 trait SparkApplication {
 

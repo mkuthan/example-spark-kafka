@@ -16,23 +16,24 @@
 
 package example
 
+import scala.collection.mutable
+import scala.concurrent.duration._
+
 import example.WordCount._
 import org.apache.spark.rdd.RDD
 import org.mkuthan.spark.SparkStreamingSpec
 import org.scalatest._
 import org.scalatest.concurrent.Eventually
-import org.scalatest.time.{Millis, Span}
-
-import scala.collection.mutable
-import scala.concurrent.duration._
+import org.scalatest.time.Millis
+import org.scalatest.time.Span
 
 object WordCountSpec {
-  val windowDuration = 4.seconds
-  val slideDuration = 2.seconds
-  val stopWords = Set("the", "an", "a")
+  val WindowDuration = 4.seconds
+  val SlideDuration = 2.seconds
+  val StopWords = Set("the", "an", "a")
 
-  val input = mutable.Queue[RDD[String]]()
-  val output = mutable.ArrayBuffer.empty[Array[WordCount]]
+  val Input = mutable.Queue[RDD[String]]()
+  val Output = mutable.ArrayBuffer.empty[Array[WordCount]]
 }
 
 class WordCountSpec extends FlatSpec with GivenWhenThen with Matchers with Eventually with SparkStreamingSpec {
@@ -48,12 +49,12 @@ class WordCountSpec extends FlatSpec with GivenWhenThen with Matchers with Event
 
     WordCount.countWords(
       ssc,
-      ssc.queueStream(input),
-      stopWords,
-      windowDuration,
-      slideDuration
+      ssc.queueStream(Input),
+      StopWords,
+      WindowDuration,
+      SlideDuration
     ).foreachRDD { rdd =>
-      output += rdd.collect()
+      Output += rdd.collect()
     }
 
     ssc.start()
@@ -67,22 +68,22 @@ class WordCountSpec extends FlatSpec with GivenWhenThen with Matchers with Event
 
   "Apache Spark set" should "be counted over sliding window" in {
     When("first set of words queued")
-    input += sc.makeRDD(Seq("apache"))
+    Input += sc.makeRDD(Seq("apache"))
 
     Then("words counted after first slide")
-    advanceClock(slideDuration)
+    advanceClock(SlideDuration)
     eventually {
-      output.last should contain only (
+      Output.last should contain only (
         ("apache", 1))
     }
 
     When("second set of words queued")
-    input += sc.makeRDD(Seq("apache", "spark"))
+    Input += sc.makeRDD(Seq("apache", "spark"))
 
     Then("words counted after second slide")
-    advanceClock(slideDuration)
+    advanceClock(SlideDuration)
     eventually {
-      output.last should contain only(
+      Output.last should contain only(
         ("apache", 2),
         ("spark", 1))
     }
@@ -90,9 +91,9 @@ class WordCountSpec extends FlatSpec with GivenWhenThen with Matchers with Event
     When("nothing more queued")
 
     Then("word counted after third slide")
-    advanceClock(slideDuration)
+    advanceClock(SlideDuration)
     eventually {
-      output.last should contain only(
+      Output.last should contain only(
         ("apache", 1),
         ("spark", 1))
     }
@@ -100,35 +101,35 @@ class WordCountSpec extends FlatSpec with GivenWhenThen with Matchers with Event
     When("nothing more queued")
 
     Then("word counted after fourth slide")
-    advanceClock(slideDuration)
+    advanceClock(SlideDuration)
     eventually {
-      output.last shouldBe empty
+      Output.last shouldBe empty
     }
   }
 
   "The most famous Hamlet quote" should "be counted over sliding window" in {
-    input += sc.makeRDD(Seq("To be"))
-    advanceClock(slideDuration)
+    Input += sc.makeRDD(Seq("To be"))
+    advanceClock(SlideDuration)
     eventually {
-      output.last should contain only(
+      Output.last should contain only(
         ("be", 1),
         ("to", 1))
     }
 
-    input += sc.makeRDD(Seq("or not to be,"))
-    advanceClock(slideDuration)
+    Input += sc.makeRDD(Seq("or not to be,"))
+    advanceClock(SlideDuration)
     eventually {
-      output.last should contain only(
+      Output.last should contain only(
         ("be", 2),
         ("not", 1),
         ("or", 1),
         ("to", 2))
     }
 
-    input += sc.makeRDD(Seq(" that is the question"))
-    advanceClock(slideDuration)
+    Input += sc.makeRDD(Seq(" that is the question"))
+    advanceClock(SlideDuration)
     eventually {
-      output.last should contain only(
+      Output.last should contain only(
         ("be", 1),
         ("is", 1),
         ("not", 1),
@@ -138,17 +139,17 @@ class WordCountSpec extends FlatSpec with GivenWhenThen with Matchers with Event
         ("to", 1))
     }
 
-    advanceClock(slideDuration)
+    advanceClock(SlideDuration)
     eventually {
-      output.last should contain only(
+      Output.last should contain only(
         ("is", 1),
         ("question", 1),
         ("that", 1))
     }
 
-    advanceClock(slideDuration)
+    advanceClock(SlideDuration)
     eventually {
-      output.last shouldBe empty
+      Output.last shouldBe empty
     }
   }
 

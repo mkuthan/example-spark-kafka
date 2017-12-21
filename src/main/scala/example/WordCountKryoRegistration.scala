@@ -20,7 +20,6 @@ import com.esotericsoftware.kryo.Kryo
 import org.apache.spark.serializer.KryoRegistrator
 import org.mkuthan.spark.KafkaPayloadStringCodec
 
-
 class WordCountKryoRegistration extends KryoRegistrator {
 
   override def registerClasses(kryo: Kryo): Unit = {
@@ -29,7 +28,7 @@ class WordCountKryoRegistration extends KryoRegistrator {
     //
     // register avro specific records using twitter chill
     //
-    //kryo.register(classOf[MyAvroType], AvroSerializer.SpecificRecordBinarySerializer[MyAvroType])
+    // kryo.register(classOf[MyAvroType], AvroSerializer.SpecificRecordBinarySerializer[MyAvroType])
 
   }
 
