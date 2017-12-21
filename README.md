@@ -48,11 +48,11 @@ Start Kafka producer:
 
 Start Kafka consumer:
 
-    ./bin/kafka-console-consumer.sh --zookeeper localhost:2181 --topic output
+    ./bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic output
 
 Run example application:
 
-    ./sbt "run-main example.WordCountJob"
+    sbt "runMain example.WordCountJob"
 
 Publish a few words on input topic using Kafka console producer and check the processing result on output topic using Kafka console producer.
 

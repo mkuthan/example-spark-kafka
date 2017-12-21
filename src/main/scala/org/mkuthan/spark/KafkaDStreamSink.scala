@@ -23,7 +23,7 @@ import org.apache.log4j.Logger
 import org.apache.spark.TaskContext
 import org.apache.spark.streaming.dstream.DStream
 
-class KafkaDStreamSink(dstream: DStream[KafkaPayload]) {
+class KafkaDStreamSink(@transient private val dstream: DStream[KafkaPayload]) extends Serializable {
 
   def sendToKafka(config: Map[String, String], topic: String): Unit = {
     dstream.foreachRDD { rdd =>

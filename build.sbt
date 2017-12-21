@@ -57,6 +57,10 @@ lazy val customLibraryDependencies = Seq(
   "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 )
 
+lazy val commonExcludeDependencies = Seq(
+  "org.slf4j" % "slf4j-log4j12"
+)
+
 lazy val customJavaOptions = Seq(
   "-Xmx1024m",
   "-XX:-MaxFDLimit"
@@ -69,6 +73,7 @@ lazy val root = (project in file("."))
   .settings(commonSettings)
   .settings(scalacOptions ++= customScalacOptions)
   .settings(libraryDependencies ++= customLibraryDependencies)
+  .settings(excludeDependencies ++= commonExcludeDependencies)
   .settings(fork in run := true)
   .settings(connectInput in run := true)
   .settings(javaOptions in run ++= customJavaOptions)
