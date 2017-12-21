@@ -37,7 +37,7 @@ object WordCount {
   ): DStream[WordCount] = {
 
     import scala.language.implicitConversions
-    implicit def finiteDurationToSparkDuration(value: FiniteDuration): Duration = new Duration(value.toMillis)
+    implicit def finiteDurationToSparkDuration(value: FiniteDuration): Duration = Duration(value.toMillis)
 
     val sc = ssc.sparkContext
 
